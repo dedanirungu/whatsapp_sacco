@@ -1,0 +1,178 @@
+<div class="messages">
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Messages</h1>
+      <button onclick="showSendMessageModal()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+        New Message
+      </button>
+    </div>
+
+    {{#if error}}
+      <div class="text-center py-4 text-red-500">
+        <p>{{error}}</p>
+      </div>
+    {{else if messages.length}}
+      <table class="min-w-full">
+        <thead>
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {{#each messages}}
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <a href="/members/{{this.Member.id}}" class="text-blue-600 hover:text-blue-900">
+                  {{this.Member.name}}
+                </a>
+              </td>
+              <td class="px-6 py-4">{{this.message}}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{formatDate this.timestamp}}</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <div class="text-center py-4">
+        <p>No messages found. Send your first message to get started.</p>
+      </div>
+    {{/if}}
+  </div>
+
+  <!-- Send Message Modal -->
+  <div id="sendMessageModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+      <h2 class="text-xl font-bold mb-4">Send New Message</h2>
+      <form id="sendMessageForm">
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="member_id">Recipient</label>
+          <select id="messageMemberId" name="member_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+            <option value="">Select a member</option>
+            {{#each members}}
+              <option value="{{this.id}}">{{this.name}} ({{this.phone}})</option>
+            {{/each}}
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="message">Message</label>
+          <textarea id="messageText" name="message" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" rows="4" required></textarea>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" onclick="hideSendMessageModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded mr-2">Cancel</button>
+          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Send</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Bulk Message Modal -->
+  <div id="bulkMessageModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+      <h2 class="text-xl font-bold mb-4">Send Bulk Message</h2>
+      <form id="bulkMessageForm">
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="message">Message</label>
+          <textarea id="bulkMessageText" name="message" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" rows="4" required></textarea>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" onclick="hideBulkMessageModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded mr-2">Cancel</button>
+          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Send to All</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Show modal functions
+  function showSendMessageModal() {
+    document.getElementById('sendMessageModal').classList.remove('hidden');
+  }
+  
+  function hideSendMessageModal() {
+    document.getElementById('sendMessageModal').classList.add('hidden');
+  }
+  
+  function showBulkMessageModal() {
+    document.getElementById('bulkMessageModal').classList.remove('hidden');
+  }
+  
+  function hideBulkMessageModal() {
+    document.getElementById('bulkMessageModal').classList.add('hidden');
+  }
+  
+  // Send message form submission
+  document.getElementById('sendMessageForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const messageData = {
+      member_id: document.getElementById('messageMemberId').value,
+      message: document.getElementById('messageText').value
+    };
+    
+    try {
+      // First, create the message record
+      const createResponse = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(messageData)
+      });
+      
+      if (!createResponse.ok) {
+        throw new Error('Failed to create message record');
+      }
+      
+      // Then, send via WhatsApp
+      const sendResponse = await fetch(`/api/members/${messageData.member_id}/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: messageData.message })
+      });
+      
+      if (!sendResponse.ok) {
+        throw new Error('Failed to send WhatsApp message');
+      }
+      
+      // Redirect to refresh the page
+      window.location.reload();
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message. Please try again.');
+    }
+  });
+  
+  // Bulk message form submission
+  document.getElementById('bulkMessageForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const messageData = {
+      message: document.getElementById('bulkMessageText').value
+    };
+    
+    try {
+      const response = await fetch('/api/members/bulk-send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(messageData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send bulk messages');
+      }
+      
+      // Redirect to refresh the page
+      window.location.reload();
+    } catch (error) {
+      console.error('Error sending bulk messages:', error);
+      alert('Failed to send bulk messages. Please try again.');
+    }
+  });
+</script>

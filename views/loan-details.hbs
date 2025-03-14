@@ -1,0 +1,202 @@
+<div class="loan-details">
+  <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">Loan Details</h1>
+      <a href="/loans" class="text-blue-600 hover:text-blue-900">Back to Loans</a>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div>
+        <p class="text-gray-600 font-semibold">Member:</p>
+        <p class="text-xl"><a href="/members/{{loan.Member.id}}" class="text-blue-600 hover:text-blue-900">{{loan.Member.name}}</a></p>
+      </div>
+      <div>
+        <p class="text-gray-600 font-semibold">Amount:</p>
+        <p class="text-xl">{{formatCurrency loan.amount}}</p>
+      </div>
+      <div>
+        <p class="text-gray-600 font-semibold">Interest Rate:</p>
+        <p class="text-xl">{{loan.interest_rate}}%</p>
+      </div>
+      <div>
+        <p class="text-gray-600 font-semibold">Term:</p>
+        <p class="text-xl">{{loan.term_months}} months</p>
+      </div>
+      <div>
+        <p class="text-gray-600 font-semibold">Loan Type:</p>
+        <p class="text-xl capitalize">{{loan.loan_type}}</p>
+      </div>
+      <div>
+        <p class="text-gray-600 font-semibold">Status:</p>
+        <p class="{{#if (eq loan.status 'active')}}bg-blue-100 text-blue-800{{/if}}{{#if (eq loan.status 'paid')}}bg-green-100 text-green-800{{/if}}{{#if (eq loan.status 'defaulted')}}bg-red-100 text-red-800{{/if}}{{#if (eq loan.status 'restructured')}}bg-yellow-100 text-yellow-800{{/if}} px-2 py-1 rounded inline-block">
+          {{loan.status}}
+        </p>
+      </div>
+      <div>
+        <p class="text-gray-600 font-semibold">Start Date:</p>
+        <p>{{formatDate loan.start_date}}</p>
+      </div>
+      <div>
+        <p class="text-gray-600 font-semibold">End Date:</p>
+        <p>{{formatDate loan.end_date}}</p>
+      </div>
+      <div>
+        <p class="text-gray-600 font-semibold">Description:</p>
+        <p>{{loan.description}}</p>
+      </div>
+    </div>
+    
+    <div class="flex space-x-2">
+      {{#if (eq loan.status 'active')}}
+        <button onclick="showMakePaymentModal()" class="bg-sacco-green hover:bg-green-600 text-white px-3 py-1 rounded text-sm">Make Payment</button>
+        <button onclick="showEditStatusModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Update Status</button>
+      {{/if}}
+      <a href="/api/loans/{{loan.id}}/schedule" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded text-sm">View Schedule</a>
+    </div>
+  </div>
+  
+  <!-- Payment History Section -->
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-xl font-bold mb-4">Payment History</h2>
+    
+    {{#if loan.LoanPayments.length}}
+      <table class="min-w-full">
+        <thead>
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment ID</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Date</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {{#each loan.LoanPayments}}
+            <tr>
+              <td class="px-4 py-2 whitespace-nowrap">{{this.id}}</td>
+              <td class="px-4 py-2 whitespace-nowrap">{{formatCurrency this.amount}}</td>
+              <td class="px-4 py-2 whitespace-nowrap">{{formatDate this.payment_date}}</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <p class="text-gray-500">No payments have been made yet.</p>
+    {{/if}}
+  </div>
+  
+  <!-- Make Payment Modal -->
+  <div id="makePaymentModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+      <h2 class="text-xl font-bold mb-4">Make Payment</h2>
+      <form id="makePaymentForm">
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="amount">Amount</label>
+          <input type="number" id="paymentAmount" name="amount" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" step="0.01" min="0" required>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" onclick="hideMakePaymentModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded mr-2">Cancel</button>
+          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Submit Payment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Edit Status Modal -->
+  <div id="editStatusModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+      <h2 class="text-xl font-bold mb-4">Update Loan Status</h2>
+      <form id="editStatusForm">
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="status">Status</label>
+          <select id="loanStatus" name="status" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+            <option value="active" {{#if (eq loan.status 'active')}}selected{{/if}}>Active</option>
+            <option value="paid" {{#if (eq loan.status 'paid')}}selected{{/if}}>Paid</option>
+            <option value="defaulted" {{#if (eq loan.status 'defaulted')}}selected{{/if}}>Defaulted</option>
+            <option value="restructured" {{#if (eq loan.status 'restructured')}}selected{{/if}}>Restructured</option>
+          </select>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" onclick="hideEditStatusModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded mr-2">Cancel</button>
+          <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Update</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Make Payment modal functions
+  function showMakePaymentModal() {
+    document.getElementById('makePaymentModal').classList.remove('hidden');
+  }
+  
+  function hideMakePaymentModal() {
+    document.getElementById('makePaymentModal').classList.add('hidden');
+  }
+  
+  // Edit Status modal functions
+  function showEditStatusModal() {
+    document.getElementById('editStatusModal').classList.remove('hidden');
+  }
+  
+  function hideEditStatusModal() {
+    document.getElementById('editStatusModal').classList.add('hidden');
+  }
+  
+  // Make payment form submission
+  document.getElementById('makePaymentForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const paymentData = {
+      amount: parseFloat(document.getElementById('paymentAmount').value)
+    };
+    
+    try {
+      const response = await fetch('/api/loans/{{loan.id}}/payments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(paymentData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to make payment');
+      }
+      
+      // Redirect to refresh the page
+      window.location.reload();
+    } catch (error) {
+      console.error('Error making payment:', error);
+      alert('Failed to make payment. Please try again.');
+    }
+  });
+  
+  // Edit status form submission
+  document.getElementById('editStatusForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const statusData = {
+      status: document.getElementById('loanStatus').value
+    };
+    
+    try {
+      const response = await fetch('/api/loans/{{loan.id}}', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(statusData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update status');
+      }
+      
+      // Redirect to refresh the page
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating status:', error);
+      alert('Failed to update loan status. Please try again.');
+    }
+  });
+</script>

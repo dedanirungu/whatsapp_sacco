@@ -1,0 +1,163 @@
+<div class="whatsapp">
+  <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+    <h1 class="text-2xl font-bold mb-4">WhatsApp Integration</h1>
+    
+    <div class="mb-6">
+      <p class="mb-4">Scan the QR code below with your WhatsApp to connect your SACCO account.</p>
+      
+      <div class="flex flex-col items-center">
+        <div id="qrcode" class="mb-4">
+          <!-- QR code will be rendered here -->
+        </div>
+        <button id="fetchQrBtn" class="bg-sacco-green hover:bg-green-600 text-white px-4 py-2 rounded">
+          Generate QR Code
+        </button>
+      </div>
+    </div>
+    
+    <div id="connectionStatus" class="mt-4 text-center">
+      <p>Connection status will appear here.</p>
+    </div>
+  </div>
+  
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-xl font-bold mb-4">Send Test Message</h2>
+    
+    <form id="testMessageForm" class="mb-4">
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="phoneNumber">Phone Number</label>
+        <input type="text" id="phoneNumber" name="phoneNumber" placeholder="e.g. 254712345678" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+      </div>
+      <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2" for="messageText">Message</label>
+        <textarea id="messageText" name="messageText" placeholder="Enter your message here" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" rows="3" required></textarea>
+      </div>
+      <div class="flex justify-end">
+        <button type="submit" class="bg-sacco-green hover:bg-green-600 text-white px-4 py-2 rounded">
+          Send Message
+        </button>
+      </div>
+    </form>
+    
+    <div id="sendStatus" class="mt-4 hidden">
+      <!-- Send status will appear here -->
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const fetchQrBtn = document.getElementById('fetchQrBtn');
+    const qrcodeElement = document.getElementById('qrcode');
+    const connectionStatusElement = document.getElementById('connectionStatus');
+    const testMessageForm = document.getElementById('testMessageForm');
+    const sendStatusElement = document.getElementById('sendStatus');
+    
+    let checkConnectionInterval;
+    
+    // Function to check WhatsApp connection status
+    async function checkConnectionStatus() {
+      try {
+        const response = await fetch('/api/hello');
+        if (response.ok) {
+          connectionStatusElement.innerHTML = '<p class="text-sacco-green font-bold">WhatsApp client is connected!</p>';
+          clearInterval(checkConnectionInterval);
+        } else {
+          connectionStatusElement.innerHTML = '<p class="text-red-500">WhatsApp client is not connected.</p>';
+        }
+      } catch (error) {
+        connectionStatusElement.innerHTML = '<p class="text-red-500">Error checking connection status.</p>';
+        console.error('Error checking connection:', error);
+      }
+    }
+    
+    // Check connection status on page load
+    checkConnectionStatus();
+    
+    // Function to fetch QR code
+    fetchQrBtn.addEventListener('click', async function() {
+      qrcodeElement.innerHTML = '<p class="text-gray-500">Loading QR Code...</p>';
+      
+      try {
+        const response = await fetch('/api/whatsapp/qr');
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data.qrCode) {
+            qrcodeElement.innerHTML = '';
+            
+            // Generate QR code using qrcode.js
+            QRCode.toCanvas(qrcodeElement, data.qrCode, {
+              width: 200,
+              margin: 1,
+              color: {
+                dark: '#128C7E',
+                light: '#FFFFFF'
+              }
+            }, function(error) {
+              if (error) {
+                console.error('Error generating QR code:', error);
+                qrcodeElement.innerHTML = '<p class="text-red-500">Error generating QR code</p>';
+              }
+            });
+            
+            // Start checking for connection status
+            connectionStatusElement.innerHTML = '<p class="text-orange-500">Waiting for scan...</p>';
+            
+            // Clear any existing interval
+            if (checkConnectionInterval) {
+              clearInterval(checkConnectionInterval);
+            }
+            
+            // Check connection status every 5 seconds
+            checkConnectionInterval = setInterval(checkConnectionStatus, 5000);
+          } else {
+            qrcodeElement.innerHTML = '<p class="text-red-500">QR code not available. Try again later.</p>';
+          }
+        } else {
+          qrcodeElement.innerHTML = '<p class="text-red-500">Failed to fetch QR code</p>';
+        }
+      } catch (error) {
+        qrcodeElement.innerHTML = '<p class="text-red-500">Error connecting to server</p>';
+        console.error('Error fetching QR code:', error);
+      }
+    });
+    
+    // Function to send test message
+    testMessageForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const phoneNumber = document.getElementById('phoneNumber').value;
+      const messageText = document.getElementById('messageText').value;
+      
+      sendStatusElement.innerHTML = '<p class="text-orange-500">Sending message...</p>';
+      sendStatusElement.classList.remove('hidden');
+      
+      try {
+        const response = await fetch('/api/whatsapp/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            number: phoneNumber,
+            message: messageText
+          })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          sendStatusElement.innerHTML = '<p class="text-sacco-green font-bold">Message sent successfully!</p>';
+          document.getElementById('messageText').value = '';
+        } else {
+          sendStatusElement.innerHTML = `<p class="text-red-500">Failed to send message: ${data.error || 'Unknown error'}</p>`;
+        }
+      } catch (error) {
+        sendStatusElement.innerHTML = '<p class="text-red-500">Error connecting to server</p>';
+        console.error('Error sending message:', error);
+      }
+    });
+  });
+</script>

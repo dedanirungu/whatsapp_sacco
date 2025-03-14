@@ -1,0 +1,235 @@
+<div class="member-details">
+  <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-2xl font-bold">Member Details</h1>
+      <a href="/members" class="text-blue-600 hover:text-blue-900">Back to Members</a>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div>
+        <p class="text-gray-600 font-semibold">Name:</p>
+        <p class="text-xl">{{member.name}}</p>
+      </div>
+      <div>
+        <p class="text-gray-600 font-semibold">Phone:</p>
+        <p class="text-xl">{{member.phone}}</p>
+      </div>
+      <div>
+        <p class="text-gray-600 font-semibold">Member Since:</p>
+        <p>{{formatDate member.joined_date}}</p>
+      </div>
+    </div>
+    
+    <div class="flex space-x-2">
+      <button onclick="showEditModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm">Edit</button>
+      <a href="/api/members/{{member.id}}/send" class="bg-sacco-green hover:bg-green-600 text-white px-3 py-1 rounded text-sm">Send Message</a>
+    </div>
+  </div>
+  
+  <!-- Loans Section -->
+  <div class="bg-white p-6 rounded-lg shadow-md mb-6">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Loans</h2>
+      <a href="/loans?member={{member.id}}" class="bg-sacco-green hover:bg-green-600 text-white px-3 py-1 rounded text-sm">New Loan</a>
+    </div>
+    
+    {{#if member.Loans.length}}
+      <table class="min-w-full">
+        <thead>
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {{#each member.Loans}}
+            <tr>
+              <td class="px-4 py-2 whitespace-nowrap">{{formatCurrency this.amount}}</td>
+              <td class="px-4 py-2 whitespace-nowrap">
+                <span class="{{#if (eq this.status 'active')}}bg-blue-100 text-blue-800{{/if}}{{#if (eq this.status 'paid')}}bg-green-100 text-green-800{{/if}}{{#if (eq this.status 'defaulted')}}bg-red-100 text-red-800{{/if}}{{#if (eq this.status 'restructured')}}bg-yellow-100 text-yellow-800{{/if}} px-2 py-1 rounded text-sm">
+                  {{this.status}}
+                </span>
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap">{{formatDate this.start_date}}</td>
+              <td class="px-4 py-2 whitespace-nowrap">
+                <a href="/loans/{{this.id}}" class="text-blue-600 hover:text-blue-900">View</a>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <p class="text-gray-500">No loans found for this member.</p>
+    {{/if}}
+  </div>
+  
+  <!-- Transactions Section -->
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Transactions</h2>
+      <button onclick="showNewTransactionModal()" class="bg-sacco-green hover:bg-green-600 text-white px-3 py-1 rounded text-sm">New Transaction</button>
+    </div>
+    
+    {{#if member.Transactions.length}}
+      <table class="min-w-full">
+        <thead>
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {{#each member.Transactions}}
+            <tr>
+              <td class="px-4 py-2 whitespace-nowrap">
+                <span class="{{#if (eq this.type 'deposit')}}bg-green-100 text-green-800{{/if}}{{#if (eq this.type 'withdrawal')}}bg-blue-100 text-blue-800{{/if}}{{#if (eq this.type 'loan')}}bg-purple-100 text-purple-800{{/if}}{{#if (eq this.type 'repayment')}}bg-indigo-100 text-indigo-800{{/if}} px-2 py-1 rounded text-sm">
+                  {{this.type}}
+                </span>
+              </td>
+              <td class="px-4 py-2 whitespace-nowrap">{{formatCurrency this.amount}}</td>
+              <td class="px-4 py-2 whitespace-nowrap">{{formatDate this.timestamp}}</td>
+              <td class="px-4 py-2">{{this.description}}</td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <p class="text-gray-500">No transactions found for this member.</p>
+    {{/if}}
+  </div>
+  
+  <!-- Edit Member Modal -->
+  <div id="editModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+      <h2 class="text-xl font-bold mb-4">Edit Member</h2>
+      <form id="editMemberForm">
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="name">Name</label>
+          <input type="text" id="editName" name="name" value="{{member.name}}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="phone">Phone</label>
+          <input type="text" id="editPhone" name="phone" value="{{member.phone}}" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" onclick="hideEditModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded mr-2">Cancel</button>
+          <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- New Transaction Modal -->
+  <div id="newTransactionModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+      <h2 class="text-xl font-bold mb-4">New Transaction</h2>
+      <form id="newTransactionForm">
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="type">Type</label>
+          <select id="transactionType" name="type" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+            <option value="deposit">Deposit</option>
+            <option value="withdrawal">Withdrawal</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="amount">Amount</label>
+          <input type="number" id="transactionAmount" name="amount" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" step="0.01" min="0" required>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Description</label>
+          <textarea id="transactionDescription" name="description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" rows="3"></textarea>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" onclick="hideNewTransactionModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded mr-2">Cancel</button>
+          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Edit modal functions
+  function showEditModal() {
+    document.getElementById('editModal').classList.remove('hidden');
+  }
+  
+  function hideEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+  }
+  
+  // New transaction modal functions
+  function showNewTransactionModal() {
+    document.getElementById('newTransactionModal').classList.remove('hidden');
+  }
+  
+  function hideNewTransactionModal() {
+    document.getElementById('newTransactionModal').classList.add('hidden');
+  }
+  
+  // Edit member form submission
+  document.getElementById('editMemberForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const memberData = {
+      name: document.getElementById('editName').value,
+      phone: document.getElementById('editPhone').value
+    };
+    
+    try {
+      const response = await fetch('/api/members/{{member.id}}', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(memberData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update member');
+      }
+      
+      // Redirect to refresh the page
+      window.location.reload();
+    } catch (error) {
+      console.error('Error updating member:', error);
+      alert('Failed to update member. Please try again.');
+    }
+  });
+  
+  // New transaction form submission
+  document.getElementById('newTransactionForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const transactionData = {
+      member_id: {{member.id}},
+      type: document.getElementById('transactionType').value,
+      amount: parseFloat(document.getElementById('transactionAmount').value),
+      description: document.getElementById('transactionDescription').value
+    };
+    
+    try {
+      const response = await fetch('/api/transactions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(transactionData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to create transaction');
+      }
+      
+      // Redirect to refresh the page
+      window.location.reload();
+    } catch (error) {
+      console.error('Error creating transaction:', error);
+      alert('Failed to create transaction. Please try again.');
+    }
+  });
+</script>

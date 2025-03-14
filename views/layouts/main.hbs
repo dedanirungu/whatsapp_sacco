@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} - WhatsApp SACCO</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Tailwind config
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'sacco-green': '#25D366',
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <header class="bg-white shadow">
+    <nav class="container mx-auto px-4 py-2 flex items-center justify-between">
+      <a href="/" class="text-xl font-bold text-sacco-green">WhatsApp SACCO</a>
+      <div class="space-x-4">
+        <a href="/" class="{{#if activeHome}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">Home</a>
+        <a href="/members" class="{{#if activeMembers}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">Members</a>
+        <a href="/contributions" class="{{#if activeContributions}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">Contributions</a>
+        <a href="/loans" class="{{#if activeLoans}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">Loans</a>
+        <a href="/messages" class="{{#if activeMessages}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">Messages</a>
+        <a href="/whatsapp" class="{{#if activeWhatsapp}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">WhatsApp</a>
+      </div>
+    </nav>
+  </header>
+  
+  <main class="container mx-auto px-4 py-6">
+    {{{body}}}
+  </main>
+
+  <footer class="bg-white mt-8 py-4 shadow-inner">
+    <div class="container mx-auto px-4 text-center text-gray-500">
+      <p>&copy; 2025 WhatsApp SACCO. All rights reserved.</p>
+    </div>
+  </footer>
+</body>
+</html>

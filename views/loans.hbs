@@ -1,0 +1,154 @@
+<div class="loans">
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-bold">Loans</h1>
+      <button onclick="showAddLoanModal()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">
+        Add Loan
+      </button>
+    </div>
+
+    {{#if error}}
+      <div class="text-center py-4 text-red-500">
+        <p>{{error}}</p>
+      </div>
+    {{else if loans.length}}
+      <table class="min-w-full">
+        <thead>
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interest Rate</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Term</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {{#each loans}}
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap">{{this.Member.name}}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{formatCurrency this.amount}}</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{this.interest_rate}}%</td>
+              <td class="px-6 py-4 whitespace-nowrap">{{this.term_months}} months</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="{{#if (eq this.status 'active')}}bg-blue-100 text-blue-800{{/if}}{{#if (eq this.status 'paid')}}bg-green-100 text-green-800{{/if}}{{#if (eq this.status 'defaulted')}}bg-red-100 text-red-800{{/if}}{{#if (eq this.status 'restructured')}}bg-yellow-100 text-yellow-800{{/if}} px-2 py-1 rounded text-sm">
+                  {{this.status}}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <a href="/loans/{{this.id}}" class="text-blue-600 hover:text-blue-900 mr-4">View</a>
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    {{else}}
+      <div class="text-center py-4">
+        <p>No loans found. Add your first loan to get started.</p>
+      </div>
+    {{/if}}
+  </div>
+
+  <!-- Add Loan Modal -->
+  <div id="addLoanModal" class="hidden fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center">
+    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+      <h2 class="text-xl font-bold mb-4">Add New Loan</h2>
+      <form id="addLoanForm">
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="member_id">Member</label>
+          <select id="loanMemberId" name="member_id" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+            <option value="">Select a member</option>
+            {{#each members}}
+              <option value="{{this.id}}">{{this.name}}</option>
+            {{/each}}
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="amount">Amount</label>
+          <input type="number" id="loanAmount" name="amount" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" step="0.01" min="0" required>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="interest_rate">Interest Rate (%)</label>
+          <input type="number" id="interestRate" name="interest_rate" value="12" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" step="0.1" min="0" required>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="term_months">Term (Months)</label>
+          <input type="number" id="termMonths" name="term_months" value="12" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" min="1" required>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="loan_type">Loan Type</label>
+          <select id="loanType" name="loan_type" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" required>
+            <option value="reducing">Reducing Balance</option>
+            <option value="fixed">Fixed Rate</option>
+          </select>
+        </div>
+        <div class="mb-4">
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="description">Description</label>
+          <textarea id="loanDescription" name="description" class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline" rows="3"></textarea>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" onclick="hideAddLoanModal()" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded mr-2">Cancel</button>
+          <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">Save</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Show modal function
+  function showAddLoanModal() {
+    document.getElementById('addLoanModal').classList.remove('hidden');
+  }
+  
+  // Hide modal function
+  function hideAddLoanModal() {
+    document.getElementById('addLoanModal').classList.add('hidden');
+  }
+  
+  // Pre-select member if URL has member query param
+  document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const memberId = urlParams.get('member');
+    if (memberId) {
+      const memberSelect = document.getElementById('loanMemberId');
+      if (memberSelect) {
+        memberSelect.value = memberId;
+      }
+    }
+  });
+  
+  // Add loan form submission
+  document.getElementById('addLoanForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const loanData = {
+      member_id: document.getElementById('loanMemberId').value,
+      amount: parseFloat(document.getElementById('loanAmount').value),
+      interest_rate: parseFloat(document.getElementById('interestRate').value),
+      term_months: parseInt(document.getElementById('termMonths').value),
+      loan_type: document.getElementById('loanType').value,
+      description: document.getElementById('loanDescription').value
+    };
+    
+    try {
+      const response = await fetch('/api/loans', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(loanData)
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to add loan');
+      }
+      
+      // Redirect to refresh the page
+      window.location.reload();
+    } catch (error) {
+      console.error('Error adding loan:', error);
+      alert('Failed to add loan. Please try again.');
+    }
+  });
+</script>

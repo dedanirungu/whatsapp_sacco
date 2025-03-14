@@ -1,21 +1,16 @@
 # WhatsApp Sacco Application Guidelines
 
 ## Commands
-- Start server: `npm start` (builds frontend and starts server)
+- Start server: `npm start`
 - Install dependencies: `npm install` 
 - Install WhatsApp Web.js: `npm install whatsapp-web-js qrcode-terminal`
 - Install SQLite: `npm install sqlite3`
-- Development mode (server only): `npm run dev` (requires nodemon)
-- Development mode (frontend only): `npm run dev:frontend` (webpack watch)
-- Development mode (full stack): `npm run dev:full` (concurrently runs both)
-- Build frontend: `npm run build`
-- Webpack dev server: `npm run serve`
-- Lint frontend code: `npm run lint`
+- Install Handlebars: `npm install express-handlebars`
+- Development mode: `npm run dev` (requires nodemon)
 - Test: Currently no tests specified
 
 ## Code Style
-- **Backend Imports:** Use CommonJS (`require()`) 
-- **Frontend Imports:** Use ES Modules (`import/export`) for Vue.js
+- **Imports:** Use CommonJS (`require()`)
 - **Variables:** camelCase for variables, UPPERCASE for constants
 - **Error Handling:** Use try/catch blocks with appropriate error responses
 - **Routes:** Group by feature, document with comments
@@ -26,11 +21,10 @@
 - **Documentation:** Comment complex logic, document API endpoints
 
 ## Project Structure
-- Backend Express API is in server.js
-- Frontend built with Vue.js 3 (src in frontend/src, built output in frontend/dist)
-- Vue Router for SPA navigation
+- Backend Express API in server.js
+- Frontend views using Handlebars (.hbs) templating
+- Server-side routing with Express
 - Frontend styled with Tailwind CSS via CDN
-- Build system using Webpack and Babel
 - WhatsApp Web.js integration for browser-based interaction
 - QR code authentication handled through browser interface
 - SQLite database (sacco.db) for persistent storage using Sequelize ORM
