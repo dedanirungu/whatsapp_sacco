@@ -22,9 +22,16 @@
 ## Project Structure
 - Backend Express API is in server.js
 - Frontend built with Vue.js (expected in frontend/dist)
+- Frontend styling with Tailwind CSS via CDN (https://cdn.tailwindcss.com)
 - WhatsApp Web.js integration for browser-based interaction instead of terminal
 - QR code authentication handled through browser interface
 - SQLite database (sacco.db) for persistent storage
+
+## CSS & Frontend
+- Using Tailwind CSS via CDN instead of custom CSS
+- Primary color for buttons: bg-green-500 hover:bg-green-600
+- Card design: bg-white p-6 rounded-lg shadow-md
+- Custom WhatsApp brand color: 'sacco-green': '#25D366'
 
 ## Database Schema
 
