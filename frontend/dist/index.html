@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WhatsApp Sacco</title>
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>{{ title }}</h1>
+    </header>
+    <main>
+      <div class="card">
+        <p>{{ message }}</p>
+        <button @click="callApi">Call API</button>
+      </div>
+      
+      <!-- WhatsApp Section -->
+      <div class="card mt-20">
+        <h2>WhatsApp Integration</h2>
+        
+        <div v-if="!whatsappConnected" class="qr-section">
+          <p>Scan the QR code with WhatsApp to connect</p>
+          <div id="qrcode"></div>
+          <button @click="fetchQrCode">Show QR Code</button>
+        </div>
+        
+        <div v-else class="message-section">
+          <p>WhatsApp Connected!</p>
+          
+          <div class="form-group">
+            <label for="phoneNumber">Phone Number (with country code):</label>
+            <input type="text" id="phoneNumber" v-model="phoneNumber" placeholder="Example: 254712345678">
+          </div>
+          
+          <div class="form-group">
+            <label for="messageText">Message:</label>
+            <textarea id="messageText" v-model="messageText" placeholder="Enter your message"></textarea>
+          </div>
+          
+          <button @click="sendWhatsAppMessage">Send Message</button>
+          <p v-if="sendStatus" :class="sendStatus.success ? 'success' : 'error'">{{ sendStatus.message }}</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
