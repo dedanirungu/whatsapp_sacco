@@ -4,6 +4,7 @@
 - Start server: `node server.js`
 - Install dependencies: `npm install` 
 - Install WhatsApp Web.js: `npm install whatsapp-web-js qrcode-terminal`
+- Install SQLite: `npm install sqlite3`
 - Run in development: `nodemon server.js` (requires: `npm install -g nodemon`)
 - Test: Currently no tests specified
 
@@ -23,3 +24,41 @@
 - Frontend built with Vue.js (expected in frontend/dist)
 - WhatsApp Web.js integration for browser-based interaction instead of terminal
 - QR code authentication handled through browser interface
+- SQLite database (sacco.db) for persistent storage
+
+## Database Schema
+
+### Members Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `phone`: TEXT UNIQUE NOT NULL - Member's phone number 
+- `name`: TEXT NOT NULL - Member's name
+- `joined_date`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+### Transactions Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `member_id`: INTEGER NOT NULL - Foreign key to members.id
+- `amount`: REAL NOT NULL - Transaction amount
+- `type`: TEXT NOT NULL - Transaction type (deposit, withdrawal, loan, repayment)
+- `description`: TEXT - Optional description
+- `timestamp`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+## API Endpoints
+
+### Members
+- `GET /api/members` - Get all members
+- `GET /api/members/:id` - Get a single member
+- `POST /api/members` - Create a new member
+- `PUT /api/members/:id` - Update a member
+- `DELETE /api/members/:id` - Delete a member
+- `GET /api/members/:id/transactions` - Get a member's transactions
+- `POST /api/members/:id/send` - Send WhatsApp message to a member
+- `POST /api/members/bulk-send` - Send bulk WhatsApp messages to members
+
+### Transactions
+- `GET /api/transactions` - Get all transactions
+- `GET /api/transactions/:id` - Get a single transaction
+- `POST /api/transactions` - Create a new transaction
+
+### WhatsApp
+- `GET /api/whatsapp/qr` - Get QR code for WhatsApp authentication
+- `POST /api/whatsapp/send` - Send a WhatsApp message
