@@ -1,15 +1,21 @@
 # WhatsApp Sacco Application Guidelines
 
 ## Commands
-- Start server: `node server.js`
+- Start server: `npm start` (builds frontend and starts server)
 - Install dependencies: `npm install` 
 - Install WhatsApp Web.js: `npm install whatsapp-web-js qrcode-terminal`
 - Install SQLite: `npm install sqlite3`
-- Run in development: `nodemon server.js` (requires: `npm install -g nodemon`)
+- Development mode (server only): `npm run dev` (requires nodemon)
+- Development mode (frontend only): `npm run dev:frontend` (webpack watch)
+- Development mode (full stack): `npm run dev:full` (concurrently runs both)
+- Build frontend: `npm run build`
+- Webpack dev server: `npm run serve`
+- Lint frontend code: `npm run lint`
 - Test: Currently no tests specified
 
 ## Code Style
-- **Imports:** Use CommonJS (`require()`) not ES Modules
+- **Backend Imports:** Use CommonJS (`require()`) 
+- **Frontend Imports:** Use ES Modules (`import/export`) for Vue.js
 - **Variables:** camelCase for variables, UPPERCASE for constants
 - **Error Handling:** Use try/catch blocks with appropriate error responses
 - **Routes:** Group by feature, document with comments
@@ -21,11 +27,13 @@
 
 ## Project Structure
 - Backend Express API is in server.js
-- Frontend built with Vue.js (expected in frontend/dist)
-- Frontend styling with Tailwind CSS via CDN (https://cdn.tailwindcss.com)
-- WhatsApp Web.js integration for browser-based interaction instead of terminal
+- Frontend built with Vue.js 3 (src in frontend/src, built output in frontend/dist)
+- Vue Router for SPA navigation
+- Frontend styled with Tailwind CSS via CDN
+- Build system using Webpack and Babel
+- WhatsApp Web.js integration for browser-based interaction
 - QR code authentication handled through browser interface
-- SQLite database (sacco.db) for persistent storage
+- SQLite database (sacco.db) for persistent storage using Sequelize ORM
 
 ## CSS & Frontend
 - Using Tailwind CSS via CDN instead of custom CSS

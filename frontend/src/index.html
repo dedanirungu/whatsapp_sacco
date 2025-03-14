@@ -5,51 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WhatsApp Sacco</title>
   <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen">
-  <header class="bg-green-600 text-white p-4 shadow-md">
-    <div class="container mx-auto">
-      <h1 class="text-2xl font-bold">WhatsApp Sacco</h1>
-    </div>
-  </header>
-  
-  <main class="container mx-auto mt-8 px-4">
-    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-semibold mb-4 text-gray-800">Members</h2>
-        <p class="text-gray-600 mb-4">Manage your Sacco members</p>
-        <a href="/api/members" class="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">WhatsApp Sacco</a>
-      </div>
-      
-      <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-semibold mb-4 text-gray-800">Transactions</h2>
-        <p class="text-gray-600 mb-4">Track deposits and withdrawals</p>
-        <a href="/api/transactions" class="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">WhatsApp Sacco</a>
-      </div>
-      
-      <div class="bg-white p-6 rounded-lg shadow-md">
-        <h2 class="text-xl font-semibold mb-4 text-gray-800">Loans</h2>
-        <p class="text-gray-600 mb-4">Manage loan applications and repayments</p>
-        <a href="/api/loans" class="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">WhatsApp Sacco</a>
-      </div>
-    </div>
-    
-    <div class="mt-8 bg-white p-6 rounded-lg shadow-md">
-      <h2 class="text-xl font-semibold mb-4 text-gray-800">WhatsApp Integration</h2>
-      <p class="text-gray-600 mb-4">Connect with WhatsApp to communicate with members</p>
-      <div id="qrcode" class="mb-4"></div>
-      <a href="/api/whatsapp/qr" id="connectWhatsApp" class="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">WhatsApp Sacco</a>
-    </div>
-  </main>
-  
-  <footer class="mt-12 bg-gray-800 text-white p-4">
-    <div class="container mx-auto text-center">
-      <p>© 2025 WhatsApp Sacco. All rights reserved.</p>
-    </div>
-  </footer>
-  
   <script>
-    // Tailwind config (if needed)
+    // Tailwind config
     tailwind.config = {
       theme: {
         extend: {
@@ -59,35 +16,10 @@
         }
       }
     }
-
-    // Function to handle WhatsApp QR code generation
-    document.addEventListener('DOMContentLoaded', function() {
-      const connectButton = document.getElementById('connectWhatsApp');
-      const qrcodeDiv = document.getElementById('qrcode');
-      
-      connectButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        // Show loading state
-        qrcodeDiv.innerHTML = '<p class="text-center">Loading QR code...</p>';
-        
-        // Fetch QR code from the API
-        fetch('/api/whatsapp/qr')
-          .then(response => response.json())
-          .then(data => {
-            if (data.qrcode) {
-              qrcodeDiv.innerHTML = `<img src="${data.qrcode}" alt="WhatsApp QR Code" class="mx-auto">`;
-              connectButton.textContent = 'Refresh QR Code';
-            } else {
-              qrcodeDiv.innerHTML = `<p class="text-red-500">${data.error || 'Failed to generate QR code'}</p>`;
-            }
-          })
-          .catch(error => {
-            qrcodeDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
-          });
-      });
-    });
   </script>
-  <script src="../dist/app.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+  <div id="app"></div>
+  <!-- Built app.js will be automatically injected by webpack -->
 </body>
 </html>

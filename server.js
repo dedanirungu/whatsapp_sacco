@@ -43,15 +43,15 @@ client.initialize().catch(err => {
 // Mount API routes
 app.use('/api', routes(client));
 
-// Simple test route
+// Serve static Vue files from dist directory
+app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
+
+// Handle history API for Vue Router
 app.get('/api/hello', (req, res) => {
   res.json({ message: 'Hello from Express API' });
 });
 
-// Serve static Vue files
-app.use(express.static(path.join(__dirname, 'frontend', 'dist')));
-
-// For all other routes, serve the Vue app
+// For all other routes, serve the Vue app (SPA fallback)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
 });
