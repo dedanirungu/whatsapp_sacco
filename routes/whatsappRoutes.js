@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const whatsappController = require('../../controllers/whatsappController');
+const whatsappController = require('../controllers/whatsappController');
 
 // WhatsApp integration page
 router.get('/', whatsappController.getWhatsappInterfaceWeb);

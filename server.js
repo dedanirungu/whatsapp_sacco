@@ -9,7 +9,6 @@ const exphbs = require('express-handlebars');
 // Import database configuration
 const sequelize = require('./config/database');
 const routes = require('./routes');
-const webRoutes = require('./routes/web_routes');
 const whatsappController = require('./controllers/whatsappController');
 
 // Initialize Express app
@@ -68,11 +67,8 @@ client.initialize().catch(err => {
   console.error('Error initializing WhatsApp client:', err);
 });
 
-// API routes - JSON endpoints
-app.use('/api', routes(client));
-
-// Web routes - HTML views with Handlebars
-app.use('/', webRoutes);
+// Main routes - HTML views with Handlebars
+app.use('/', routes(client));
 
 // Error handler
 app.use((err, req, res, next) => {

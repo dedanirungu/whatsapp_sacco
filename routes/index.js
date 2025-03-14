@@ -1,20 +1,23 @@
 const express = require('express');
 const router = express.Router();
-const memberRoutes = require('./api/memberRoutes');
-const transactionRoutes = require('./api/transactionRoutes');
-const loanRoutes = require('./api/loanRoutes');
-const whatsappRoutes = require('./api/whatsappRoutes');
-const contributionRoutes = require('./api/contributionRoutes');
-const messageRoutes = require('./api/messageRoutes');
+
+const homeRoutes = require('./homeRoutes');
+const memberRoutes = require('./memberRoutes');
+const contributionRoutes = require('./contributionRoutes');
+const loanRoutes = require('./loanRoutes');
+const messageRoutes = require('./messageRoutes');
+const transactionRoutes = require('./transactionRoutes');
+const whatsappRoutes = require('./whatsappRoutes');
 
 module.exports = (client) => {
-  // API routes
+  // Register routes
+  router.use('/', homeRoutes);
   router.use('/members', memberRoutes);
-  router.use('/transactions', transactionRoutes);
-  router.use('/loans', loanRoutes);
-  router.use('/whatsapp', whatsappRoutes(client));
   router.use('/contributions', contributionRoutes);
+  router.use('/loans', loanRoutes);
   router.use('/messages', messageRoutes);
+  router.use('/transactions', transactionRoutes);
+  router.use('/whatsapp', whatsappRoutes);
   
   return router;
 };
