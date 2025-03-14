@@ -3,12 +3,12 @@ const router = express.Router();
 const loanController = require('../controllers/loanController');
 
 // Loans listing page
-router.get('/', loanController.getAllLoansWeb);
+router.get('/', loanController.getAllLoans);
 
 // Loan details page
-router.get('/:id', loanController.getLoanByIdWeb);
+router.get('/:id', loanController.getLoanById);
 
 // Loan repayment schedule
-router.get('/:id/schedule', loanController.getLoanScheduleWeb);
+router.get('/:id/schedule', loanController.getLoanSchedule);
 
 module.exports = router;

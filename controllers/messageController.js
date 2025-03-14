@@ -21,18 +21,18 @@ const fetchMessagesByMember = async (memberId) => {
   });
 };
 
-// API: Get all messages
+// Get all messages
 exports.getAllMessages = async (req, res) => {
   try {
     const messages = await fetchAllMessages();
-    res.status(200).json(messages);
+    res.render(messages);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching messages', error: error.message });
+    res.render({ message: 'Error fetching messages', error: error.message });
   }
 };
 
-// Web: Get all messages
-exports.getAllMessagesWeb = async (req, res) => {
+// Get all messages
+exports.getAllMessages = async (req, res) => {
   try {
     const messages = await fetchAllMessages();
     res.render('messages', {
@@ -50,23 +50,23 @@ exports.getAllMessagesWeb = async (req, res) => {
   }
 };
 
-// API: Get a single message
+// Get a single message
 exports.getMessageById = async (req, res) => {
   try {
     const message = await fetchMessageById(req.params.id);
     
     if (!message) {
-      return res.status(404).json({ message: 'Message not found' });
+      return res.render({ message: 'Message not found' });
     }
     
-    res.status(200).json(message);
+    res.render(message);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching message', error: error.message });
+    res.render({ message: 'Error fetching message', error: error.message });
   }
 };
 
-// Web: Get a single message
-exports.getMessageByIdWeb = async (req, res) => {
+// Get a single message
+exports.getMessageById = async (req, res) => {
   try {
     const message = await fetchMessageById(req.params.id);
     
@@ -98,9 +98,6 @@ exports.createMessage = async (req, res) => {
     
     // Validate required fields
     if (!member_id || !message) {
-      if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-        return res.status(400).json({ message: 'Member ID and message content are required' });
-      } else {
         return res.render('error', {
           title: 'Error',
           message: 'Member ID and message content are required'
@@ -111,9 +108,6 @@ exports.createMessage = async (req, res) => {
     // Check if member exists
     const member = await Member.findByPk(member_id);
     if (!member) {
-      if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-        return res.status(404).json({ message: 'Member not found' });
-      } else {
         return res.render('error', {
           title: 'Error',
           message: 'Member not found'
@@ -127,16 +121,10 @@ exports.createMessage = async (req, res) => {
       message
     });
     
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(201).json(newMessage);
-    } else {
       res.redirect('/messages');
     }
   } catch (error) {
     console.error('Error creating message:', error);
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(500).json({ message: 'Error creating message', error: error.message });
-    } else {
       res.render('error', {
         title: 'Error',
         message: 'Error creating message'
@@ -145,7 +133,7 @@ exports.createMessage = async (req, res) => {
   }
 };
 
-// API: Get messages by member
+// Get messages by member
 exports.getMessagesByMember = async (req, res) => {
   try {
     const memberId = req.params.member_id;
@@ -153,19 +141,19 @@ exports.getMessagesByMember = async (req, res) => {
     // Check if member exists
     const member = await Member.findByPk(memberId);
     if (!member) {
-      return res.status(404).json({ message: 'Member not found' });
+      return res.render({ message: 'Member not found' });
     }
     
     const messages = await fetchMessagesByMember(memberId);
     
-    res.status(200).json(messages);
+    res.render(messages);
   } catch (error) {
-    res.status(500).json({ message: 'Error fetching member messages', error: error.message });
+    res.render({ message: 'Error fetching member messages', error: error.message });
   }
 };
 
-// Web: Get messages by member
-exports.getMessagesByMemberWeb = async (req, res) => {
+// Get messages by member
+exports.getMessagesByMember = async (req, res) => {
   try {
     const memberId = req.params.member_id;
     

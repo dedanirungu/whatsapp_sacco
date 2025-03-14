@@ -21,19 +21,19 @@ const fetchTransactionById = async (id) => {
   });
 };
 
-// API: Get all transactions
+// Get all transactions
 exports.getAllTransactions = async (req, res) => {
   try {
     const transactions = await fetchAllTransactions();
-    res.json(transactions);
+    res.render(transactions);
   } catch (error) {
     console.error('Error fetching transactions:', error);
-    res.status(500).json({ error: 'Failed to fetch transactions' });
+    res.render({ error: 'Failed to fetch transactions' });
   }
 };
 
-// Web: Get all transactions
-exports.getAllTransactionsWeb = async (req, res) => {
+// Get all transactions
+exports.getAllTransactions = async (req, res) => {
   try {
     const transactions = await fetchAllTransactions();
     res.render('transactions', {
@@ -51,24 +51,24 @@ exports.getAllTransactionsWeb = async (req, res) => {
   }
 };
 
-// API: Get transaction by ID
+// Get transaction by ID
 exports.getTransactionById = async (req, res) => {
   try {
     const transaction = await fetchTransactionById(req.params.id);
     
     if (!transaction) {
-      return res.status(404).json({ error: 'Transaction not found' });
+      return res.render({ error: 'Transaction not found' });
     }
     
-    res.json(transaction);
+    res.render(transaction);
   } catch (error) {
     console.error('Error fetching transaction:', error);
-    res.status(500).json({ error: 'Failed to fetch transaction' });
+    res.render({ error: 'Failed to fetch transaction' });
   }
 };
 
-// Web: Get transaction by ID
-exports.getTransactionByIdWeb = async (req, res) => {
+// Get transaction by ID
+exports.getTransactionById = async (req, res) => {
   try {
     const transaction = await fetchTransactionById(req.params.id);
     
@@ -100,9 +100,6 @@ exports.createTransaction = async (req, res) => {
     
     // Validate required fields
     if (!member_id || !amount || !type) {
-      if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-        return res.status(400).json({ error: 'Member ID, amount, and type are required' });
-      } else {
         return res.render('error', {
           title: 'Error',
           message: 'Member ID, amount, and type are required'
@@ -113,9 +110,6 @@ exports.createTransaction = async (req, res) => {
     // Validate transaction type
     const validTypes = ['deposit', 'withdrawal', 'loan', 'repayment'];
     if (!validTypes.includes(type)) {
-      if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-        return res.status(400).json({ error: 'Invalid transaction type' });
-      } else {
         return res.render('error', {
           title: 'Error',
           message: 'Invalid transaction type. Valid types are: deposit, withdrawal, loan, repayment'
@@ -126,9 +120,6 @@ exports.createTransaction = async (req, res) => {
     // Check if member exists
     const member = await Member.findByPk(member_id);
     if (!member) {
-      if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-        return res.status(404).json({ error: 'Member not found' });
-      } else {
         return res.render('error', {
           title: 'Error',
           message: 'Member not found'
@@ -145,16 +136,10 @@ exports.createTransaction = async (req, res) => {
     });
     
     // Handle different response types
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(201).json(newTransaction);
-    } else {
       res.redirect('/transactions');
     }
   } catch (error) {
     console.error('Error creating transaction:', error);
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(500).json({ error: 'Failed to create transaction' });
-    } else {
       res.render('error', {
         title: 'Error',
         message: 'Failed to create transaction: ' + error.message
@@ -163,8 +148,8 @@ exports.createTransaction = async (req, res) => {
   }
 };
 
-// Web: Get transactions by type
-exports.getTransactionsByTypeWeb = async (req, res) => {
+// Get transactions by type
+exports.getTransactionsByType = async (req, res) => {
   try {
     const { type } = req.params;
     
@@ -198,7 +183,7 @@ exports.getTransactionsByTypeWeb = async (req, res) => {
   }
 };
 
-// API: Get transactions by type
+// Get transactions by type
 exports.getTransactionsByType = async (req, res) => {
   try {
     const { type } = req.params;
@@ -206,7 +191,7 @@ exports.getTransactionsByType = async (req, res) => {
     // Validate transaction type
     const validTypes = ['deposit', 'withdrawal', 'loan', 'repayment'];
     if (!validTypes.includes(type)) {
-      return res.status(400).json({ error: 'Invalid transaction type' });
+      return res.render({ error: 'Invalid transaction type' });
     }
     
     const transactions = await Transaction.findAll({
@@ -215,9 +200,9 @@ exports.getTransactionsByType = async (req, res) => {
       order: [['timestamp', 'DESC']]
     });
     
-    res.json(transactions);
+    res.render(transactions);
   } catch (error) {
     console.error('Error fetching transactions by type:', error);
-    res.status(500).json({ error: 'Failed to fetch transactions' });
+    res.render({ error: 'Failed to fetch transactions' });
   }
 };

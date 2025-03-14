@@ -33,19 +33,19 @@ const calculateTotalPaid = (payments) => {
   return payments.reduce((sum, payment) => sum + payment.amount, 0);
 };
 
-// API: Get all loans
+// Get all loans
 exports.getAllLoans = async (req, res) => {
   try {
     const loans = await fetchAllLoans();
-    res.json(loans);
+    res.render(loans);
   } catch (error) {
     console.error('Error fetching loans:', error);
-    res.status(500).json({ error: 'Failed to fetch loans' });
+    res.render({ error: 'Failed to fetch loans' });
   }
 };
 
-// Web: Get all loans
-exports.getAllLoansWeb = async (req, res) => {
+// Get all loans
+exports.getAllLoans = async (req, res) => {
   try {
     const loans = await fetchAllLoans();
     res.render('loans', {
@@ -63,13 +63,13 @@ exports.getAllLoansWeb = async (req, res) => {
   }
 };
 
-// API: Get loan by ID with payment history
+// Get loan by ID with payment history
 exports.getLoanById = async (req, res) => {
   try {
     const loan = await fetchLoanById(req.params.id);
     
     if (!loan) {
-      return res.status(404).json({ error: 'Loan not found' });
+      return res.render({ error: 'Loan not found' });
     }
     
     // Get loan payments
@@ -78,7 +78,7 @@ exports.getLoanById = async (req, res) => {
     // Calculate total paid
     const totalPaid = calculateTotalPaid(payments);
     
-    res.json({
+    res.render({
       ...loan.toJSON(),
       payments,
       totalPaid,
@@ -86,12 +86,12 @@ exports.getLoanById = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching loan:', error);
-    res.status(500).json({ error: 'Failed to fetch loan' });
+    res.render({ error: 'Failed to fetch loan' });
   }
 };
 
-// Web: Get loan by ID
-exports.getLoanByIdWeb = async (req, res) => {
+// Get loan by ID
+exports.getLoanById = async (req, res) => {
   try {
     const loan = await Loan.findByPk(req.params.id, {
       include: [
@@ -135,14 +135,14 @@ exports.createLoan = async (req, res) => {
     const { member_id, amount, interest_rate, loan_type, term_months, description } = req.body;
     
     if (!member_id || !amount || !interest_rate || !loan_type || !term_months) {
-      return res.status(400).json({ 
+      return res.render({ 
         error: 'Member ID, amount, interest rate, loan type, and term are required' 
       });
     }
     
     // Validate loan type
     if (!['reducing', 'fixed'].includes(loan_type)) {
-      return res.status(400).json({ error: "Loan type must be 'reducing' or 'fixed'" });
+      return res.render({ error: "Loan type must be 'reducing' or 'fixed'" });
     }
     
     // Calculate end date (start date + term months)
@@ -171,17 +171,11 @@ exports.createLoan = async (req, res) => {
     });
     
     // Handle different response types based on Accept header or query param
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(201).json(newLoan);
-    } else {
       // Redirect to loans list for web form submissions
       res.redirect('/loans');
     }
   } catch (error) {
     console.error('Error creating loan:', error);
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(500).json({ error: 'Failed to create loan' });
-    } else {
       res.render('error', {
         title: 'Error',
         message: 'Failed to create loan'
@@ -197,19 +191,19 @@ exports.updateLoan = async (req, res) => {
     
     // Only allow updating status and description
     if (!status && !description) {
-      return res.status(400).json({ error: 'No valid fields to update' });
+      return res.render({ error: 'No valid fields to update' });
     }
     
     // Validate status if provided
     if (status && !['active', 'paid', 'defaulted', 'restructured'].includes(status)) {
-      return res.status(400).json({ 
+      return res.render({ 
         error: "Status must be 'active', 'paid', 'defaulted', or 'restructured'" 
       });
     }
     
     const loan = await Loan.findByPk(req.params.id);
     if (!loan) {
-      return res.status(404).json({ error: 'Loan not found' });
+      return res.render({ error: 'Loan not found' });
     }
     
     if (status) loan.status = status;
@@ -218,22 +212,11 @@ exports.updateLoan = async (req, res) => {
     await loan.save();
     
     // Handle different response types based on Accept header or query param
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.json({ 
-        id: parseInt(req.params.id), 
-        status: status || undefined,
-        description: description || undefined,
-        updated: true 
-      });
-    } else {
       // Redirect back to loan details for web form submissions
       res.redirect(`/loans/${req.params.id}`);
     }
   } catch (error) {
     console.error('Error updating loan:', error);
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(500).json({ error: 'Failed to update loan' });
-    } else {
       res.render('error', {
         title: 'Error',
         message: 'Failed to update loan'
@@ -249,13 +232,13 @@ exports.makeLoanPayment = async (req, res) => {
     const loanId = req.params.id;
     
     if (!amount || amount <= 0) {
-      return res.status(400).json({ error: 'A positive payment amount is required' });
+      return res.render({ error: 'A positive payment amount is required' });
     }
     
     // First verify the loan exists
     const loan = await Loan.findByPk(loanId);
     if (!loan) {
-      return res.status(404).json({ error: 'Loan not found' });
+      return res.render({ error: 'Loan not found' });
     }
     
     // Process the payment
@@ -287,25 +270,11 @@ exports.makeLoanPayment = async (req, res) => {
     }
     
     // Handle different response types based on Accept header or query param
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(201).json({
-        id: payment.id,
-        loan_id: parseInt(loanId),
-        amount,
-        payment_date: payment.payment_date,
-        totalPaid,
-        remainingBalance: Math.max(0, loan.amount - totalPaid),
-        isFullyPaid: totalPaid >= loan.amount
-      });
-    } else {
       // Redirect back to loan details for web form submissions
       res.redirect(`/loans/${loanId}`);
     }
   } catch (error) {
     console.error('Error processing loan payment:', error);
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(500).json({ error: 'Failed to process loan payment' });
-    } else {
       res.render('error', {
         title: 'Error',
         message: 'Failed to process loan payment'
@@ -314,13 +283,13 @@ exports.makeLoanPayment = async (req, res) => {
   }
 };
 
-// API: Get loan repayment schedule
+// Get loan repayment schedule
 exports.getLoanSchedule = async (req, res) => {
   try {
     const loan = await Loan.findByPk(req.params.id);
     
     if (!loan) {
-      return res.status(404).json({ error: 'Loan not found' });
+      return res.render({ error: 'Loan not found' });
     }
     
     // Calculate loan schedule
@@ -334,7 +303,7 @@ exports.getLoanSchedule = async (req, res) => {
     
     const totalPaid = calculateTotalPaid(payments);
     
-    res.json({
+    res.render({
       loan,
       ...schedule,
       actualPayments: payments,
@@ -343,12 +312,12 @@ exports.getLoanSchedule = async (req, res) => {
     });
   } catch (error) {
     console.error('Error generating loan schedule:', error);
-    res.status(500).json({ error: 'Failed to generate loan schedule' });
+    res.render({ error: 'Failed to generate loan schedule' });
   }
 };
 
-// Web: Get loan repayment schedule
-exports.getLoanScheduleWeb = async (req, res) => {
+// Get loan repayment schedule
+exports.getLoanSchedule = async (req, res) => {
   try {
     const loan = await Loan.findByPk(req.params.id, {
       include: [{ model: Member }]

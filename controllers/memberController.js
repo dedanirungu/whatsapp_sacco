@@ -34,19 +34,19 @@ const fetchMemberLoans = async (memberId) => {
   });
 };
 
-// API: Get all members
+// Get all members
 exports.getAllMembers = async (req, res) => {
   try {
     const members = await fetchAllMembers();
-    res.json(members);
+    res.render(members);
   } catch (error) {
     console.error('Error fetching members:', error);
-    res.status(500).json({ error: 'Failed to fetch members' });
+    res.render({ error: 'Failed to fetch members' });
   }
 };
 
-// Web: Get all members
-exports.getAllMembersWeb = async (req, res) => {
+// Get all members
+exports.getAllMembers = async (req, res) => {
   try {
     const members = await fetchAllMembers();
     res.render('members', {
@@ -64,22 +64,22 @@ exports.getAllMembersWeb = async (req, res) => {
   }
 };
 
-// API: Get member by ID
+// Get member by ID
 exports.getMemberById = async (req, res) => {
   try {
     const member = await fetchMemberById(req.params.id);
     if (!member) {
-      return res.status(404).json({ error: 'Member not found' });
+      return res.render({ error: 'Member not found' });
     }
-    res.json(member);
+    res.render(member);
   } catch (error) {
     console.error('Error fetching member:', error);
-    res.status(500).json({ error: 'Failed to fetch member' });
+    res.render({ error: 'Failed to fetch member' });
   }
 };
 
-// Web: Get member by ID
-exports.getMemberByIdWeb = async (req, res) => {
+// Get member by ID
+exports.getMemberById = async (req, res) => {
   try {
     const member = await fetchMemberWithDetails(req.params.id);
     
@@ -110,9 +110,6 @@ exports.createMember = async (req, res) => {
     const { phone, name } = req.body;
     
     if (!phone || !name) {
-      if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-        return res.status(400).json({ error: 'Phone and name are required' });
-      } else {
         return res.render('error', {
           title: 'Error',
           message: 'Phone and name are required'
@@ -122,16 +119,10 @@ exports.createMember = async (req, res) => {
     
     const newMember = await Member.create({ phone, name });
     
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(201).json(newMember);
-    } else {
       res.redirect('/members');
     }
   } catch (error) {
     console.error('Error creating member:', error);
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(500).json({ error: 'Failed to create member' });
-    } else {
       res.render('error', {
         title: 'Error',
         message: 'Failed to create member'
@@ -146,9 +137,6 @@ exports.updateMember = async (req, res) => {
     const { phone, name } = req.body;
     
     if (!phone || !name) {
-      if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-        return res.status(400).json({ error: 'Phone and name are required' });
-      } else {
         return res.render('error', {
           title: 'Error',
           message: 'Phone and name are required'
@@ -158,9 +146,6 @@ exports.updateMember = async (req, res) => {
     
     const member = await Member.findByPk(req.params.id);
     if (!member) {
-      if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-        return res.status(404).json({ error: 'Member not found' });
-      } else {
         return res.render('error', {
           title: 'Error',
           message: 'Member not found'
@@ -172,16 +157,10 @@ exports.updateMember = async (req, res) => {
     member.name = name;
     await member.save();
     
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.json(member);
-    } else {
       res.redirect(`/members/${member.id}`);
     }
   } catch (error) {
     console.error('Error updating member:', error);
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(500).json({ error: 'Failed to update member' });
-    } else {
       res.render('error', {
         title: 'Error',
         message: 'Failed to update member'
@@ -195,9 +174,6 @@ exports.deleteMember = async (req, res) => {
   try {
     const member = await Member.findByPk(req.params.id);
     if (!member) {
-      if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-        return res.status(404).json({ error: 'Member not found' });
-      } else {
         return res.render('error', {
           title: 'Error',
           message: 'Member not found'
@@ -207,16 +183,10 @@ exports.deleteMember = async (req, res) => {
     
     await member.destroy();
     
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(204).send();
-    } else {
       res.redirect('/members');
     }
   } catch (error) {
     console.error('Error deleting member:', error);
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(500).json({ error: 'Failed to delete member' });
-    } else {
       res.render('error', {
         title: 'Error',
         message: 'Failed to delete member'
@@ -225,19 +195,19 @@ exports.deleteMember = async (req, res) => {
   }
 };
 
-// API: Get member transactions
+// Get member transactions
 exports.getMemberTransactions = async (req, res) => {
   try {
     const transactions = await fetchMemberTransactions(req.params.id);
-    res.json(transactions);
+    res.render(transactions);
   } catch (error) {
     console.error('Error fetching member transactions:', error);
-    res.status(500).json({ error: 'Failed to fetch member transactions' });
+    res.render({ error: 'Failed to fetch member transactions' });
   }
 };
 
-// Web: Get member transactions
-exports.getMemberTransactionsWeb = async (req, res) => {
+// Get member transactions
+exports.getMemberTransactions = async (req, res) => {
   try {
     const member = await fetchMemberById(req.params.id);
     if (!member) {
@@ -264,19 +234,19 @@ exports.getMemberTransactionsWeb = async (req, res) => {
   }
 };
 
-// API: Get member loans
+// Get member loans
 exports.getMemberLoans = async (req, res) => {
   try {
     const loans = await fetchMemberLoans(req.params.id);
-    res.json(loans);
+    res.render(loans);
   } catch (error) {
     console.error('Error fetching member loans:', error);
-    res.status(500).json({ error: 'Failed to fetch member loans' });
+    res.render({ error: 'Failed to fetch member loans' });
   }
 };
 
-// Web: Get member loans
-exports.getMemberLoansWeb = async (req, res) => {
+// Get member loans
+exports.getMemberLoans = async (req, res) => {
   try {
     const member = await fetchMemberById(req.params.id);
     if (!member) {

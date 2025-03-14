@@ -24,18 +24,8 @@ const fetchContributionsByMember = async (memberId) => {
   });
 };
 
-// API: Get all contributions
+// Get all contributions
 exports.getAllContributions = async (req, res) => {
-  try {
-    const contributions = await fetchContributions();
-    res.status(200).json(contributions);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching contributions', error: error.message });
-  }
-};
-
-// Web: Get all contributions
-exports.getAllContributionsWeb = async (req, res) => {
   try {
     const contributions = await fetchContributions();
     res.render('contributions', {
@@ -45,31 +35,15 @@ exports.getAllContributionsWeb = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching contributions:', error);
-    res.render('contributions', {
-      title: 'Contributions',
-      error: 'Error fetching contributions',
-      activeContributions: true
+    res.render('error', {
+      title: 'Error',
+      message: 'Error fetching contributions'
     });
   }
 };
 
-// API: Get a single contribution
+// Get a single contribution
 exports.getContributionById = async (req, res) => {
-  try {
-    const contribution = await fetchContributionById(req.params.id);
-    
-    if (!contribution) {
-      return res.status(404).json({ message: 'Contribution not found' });
-    }
-    
-    res.status(200).json(contribution);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching contribution', error: error.message });
-  }
-};
-
-// Web: Get a single contribution
-exports.getContributionByIdWeb = async (req, res) => {
   try {
     const contribution = await fetchContributionById(req.params.id);
     
@@ -101,61 +75,39 @@ exports.createContribution = async (req, res) => {
     
     // Validate required fields
     if (!member_id || !amount) {
-      return res.status(400).json({ message: 'Member ID and amount are required' });
+      return res.render('error', {
+        title: 'Error',
+        message: 'Member ID and amount are required'
+      });
     }
     
     // Check if member exists
     const member = await Member.findByPk(member_id);
     if (!member) {
-      return res.status(404).json({ message: 'Member not found' });
+      return res.render('error', {
+        title: 'Error',
+        message: 'Member not found'
+      });
     }
     
-    const contribution = await Contribution.create({
+    await Contribution.create({
       member_id,
       amount,
       reason
     });
     
-    // Handle different response types based on Accept header or query param
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(201).json(contribution);
-    } else {
-      // Redirect to contributions list for web form submissions
-      res.redirect('/contributions');
-    }
+    // Redirect to contributions list for web form submissions
+    res.redirect('/contributions');
   } catch (error) {
-    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
-      res.status(500).json({ message: 'Error creating contribution', error: error.message });
-    } else {
-      res.render('error', {
-        title: 'Error',
-        message: 'Error creating contribution'
-      });
-    }
+    res.render('error', {
+      title: 'Error',
+      message: 'Error creating contribution: ' + error.message
+    });
   }
 };
 
-// API: Get contributions by member
+// Get contributions by member
 exports.getContributionsByMember = async (req, res) => {
-  try {
-    const memberId = req.params.member_id;
-    
-    // Check if member exists
-    const member = await Member.findByPk(memberId);
-    if (!member) {
-      return res.status(404).json({ message: 'Member not found' });
-    }
-    
-    const contributions = await fetchContributionsByMember(memberId);
-    
-    res.status(200).json(contributions);
-  } catch (error) {
-    res.status(500).json({ message: 'Error fetching member contributions', error: error.message });
-  }
-};
-
-// Web: Get contributions by member
-exports.getContributionsByMemberWeb = async (req, res) => {
   try {
     const memberId = req.params.member_id;
     

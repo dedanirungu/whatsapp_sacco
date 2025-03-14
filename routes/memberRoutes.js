@@ -3,15 +3,15 @@ const router = express.Router();
 const memberController = require('../controllers/memberController');
 
 // Member listing page
-router.get('/', memberController.getAllMembersWeb);
+router.get('/', memberController.getAllMembers);
 
 // Member details page
-router.get('/:id', memberController.getMemberByIdWeb);
+router.get('/:id', memberController.getMemberById);
 
 // Member transactions
-router.get('/:id/transactions', memberController.getMemberTransactionsWeb);
+router.get('/:id/transactions', memberController.getMemberTransactions);
 
 // Member loans
-router.get('/:id/loans', memberController.getMemberLoansWeb);
+router.get('/:id/loans', memberController.getMemberLoans);
 
 module.exports = router;
