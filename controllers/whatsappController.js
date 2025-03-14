@@ -1,4 +1,4 @@
-const { Member, Loan } = require('../models');
+const { Member, Loan, LoanPayment } = require('../models');
 const { calculateLoanSchedule } = require('../utils/loanCalculator');
 const { Op } = require('sequelize');
 
