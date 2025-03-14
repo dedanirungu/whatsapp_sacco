@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>WhatsApp Sacco</title>
-  <!-- Use Tailwind via CDN instead of build process -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 min-h-screen">
@@ -19,19 +18,19 @@
       <div class="bg-white p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold mb-4 text-gray-800">Members</h2>
         <p class="text-gray-600 mb-4">Manage your Sacco members</p>
-        <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">View Members</button>
+        <a href="/api/members" class="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">WhatsApp Sacco</a>
       </div>
       
       <div class="bg-white p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold mb-4 text-gray-800">Transactions</h2>
         <p class="text-gray-600 mb-4">Track deposits and withdrawals</p>
-        <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">View Transactions</button>
+        <a href="/api/transactions" class="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">WhatsApp Sacco</a>
       </div>
       
       <div class="bg-white p-6 rounded-lg shadow-md">
         <h2 class="text-xl font-semibold mb-4 text-gray-800">Loans</h2>
         <p class="text-gray-600 mb-4">Manage loan applications and repayments</p>
-        <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">View Loans</button>
+        <a href="/api/loans" class="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">WhatsApp Sacco</a>
       </div>
     </div>
     
@@ -39,7 +38,7 @@
       <h2 class="text-xl font-semibold mb-4 text-gray-800">WhatsApp Integration</h2>
       <p class="text-gray-600 mb-4">Connect with WhatsApp to communicate with members</p>
       <div id="qrcode" class="mb-4"></div>
-      <button class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">Connect WhatsApp</button>
+      <a href="/api/whatsapp/qr" id="connectWhatsApp" class="inline-block bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition">WhatsApp Sacco</a>
     </div>
   </main>
   
@@ -60,6 +59,34 @@
         }
       }
     }
+
+    // Function to handle WhatsApp QR code generation
+    document.addEventListener('DOMContentLoaded', function() {
+      const connectButton = document.getElementById('connectWhatsApp');
+      const qrcodeDiv = document.getElementById('qrcode');
+      
+      connectButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Show loading state
+        qrcodeDiv.innerHTML = '<p class="text-center">Loading QR code...</p>';
+        
+        // Fetch QR code from the API
+        fetch('/api/whatsapp/qr')
+          .then(response => response.json())
+          .then(data => {
+            if (data.qrcode) {
+              qrcodeDiv.innerHTML = `<img src="${data.qrcode}" alt="WhatsApp QR Code" class="mx-auto">`;
+              connectButton.textContent = 'Refresh QR Code';
+            } else {
+              qrcodeDiv.innerHTML = `<p class="text-red-500">${data.error || 'Failed to generate QR code'}</p>`;
+            }
+          })
+          .catch(error => {
+            qrcodeDiv.innerHTML = `<p class="text-red-500">Error: ${error.message}</p>`;
+          });
+      });
+    });
   </script>
   <script src="../dist/app.js"></script>
 </body>
