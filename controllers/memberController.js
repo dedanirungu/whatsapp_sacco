@@ -38,17 +38,6 @@ const fetchMemberLoans = async (memberId) => {
 exports.getAllMembers = async (req, res) => {
   try {
     const members = await fetchAllMembers();
-    res.render(members);
-  } catch (error) {
-    console.error('Error fetching members:', error);
-    res.render({ error: 'Failed to fetch members' });
-  }
-};
-
-// Get all members
-exports.getAllMembers = async (req, res) => {
-  try {
-    const members = await fetchAllMembers();
     res.render('members', {
       title: 'Members',
       members: members.map(member => member.toJSON()),
@@ -61,20 +50,6 @@ exports.getAllMembers = async (req, res) => {
       error: 'Error fetching members',
       activeMembers: true
     });
-  }
-};
-
-// Get member by ID
-exports.getMemberById = async (req, res) => {
-  try {
-    const member = await fetchMemberById(req.params.id);
-    if (!member) {
-      return res.render({ error: 'Member not found' });
-    }
-    res.render(member);
-  } catch (error) {
-    console.error('Error fetching member:', error);
-    res.render({ error: 'Failed to fetch member' });
   }
 };
 
@@ -110,24 +85,21 @@ exports.createMember = async (req, res) => {
     const { phone, name } = req.body;
     
     if (!phone || !name) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'Phone and name are required'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'Phone and name are required'
+      });
     }
     
     const newMember = await Member.create({ phone, name });
     
-      res.redirect('/members');
-    }
+    res.redirect('/members');
   } catch (error) {
     console.error('Error creating member:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Failed to create member'
-      });
-    }
+    res.render('error', {
+      title: 'Error',
+      message: 'Failed to create member'
+    });
   }
 };
 
@@ -137,35 +109,31 @@ exports.updateMember = async (req, res) => {
     const { phone, name } = req.body;
     
     if (!phone || !name) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'Phone and name are required'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'Phone and name are required'
+      });
     }
     
     const member = await Member.findByPk(req.params.id);
     if (!member) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'Member not found'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'Member not found'
+      });
     }
     
     member.phone = phone;
     member.name = name;
     await member.save();
     
-      res.redirect(`/members/${member.id}`);
-    }
+    res.redirect(`/members/${member.id}`);
   } catch (error) {
     console.error('Error updating member:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Failed to update member'
-      });
-    }
+    res.render('error', {
+      title: 'Error',
+      message: 'Failed to update member'
+    });
   }
 };
 
@@ -174,35 +142,21 @@ exports.deleteMember = async (req, res) => {
   try {
     const member = await Member.findByPk(req.params.id);
     if (!member) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'Member not found'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'Member not found'
+      });
     }
     
     await member.destroy();
     
-      res.redirect('/members');
-    }
+    res.redirect('/members');
   } catch (error) {
     console.error('Error deleting member:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Failed to delete member'
-      });
-    }
-  }
-};
-
-// Get member transactions
-exports.getMemberTransactions = async (req, res) => {
-  try {
-    const transactions = await fetchMemberTransactions(req.params.id);
-    res.render(transactions);
-  } catch (error) {
-    console.error('Error fetching member transactions:', error);
-    res.render({ error: 'Failed to fetch member transactions' });
+    res.render('error', {
+      title: 'Error',
+      message: 'Failed to delete member'
+    });
   }
 };
 
@@ -231,17 +185,6 @@ exports.getMemberTransactions = async (req, res) => {
       title: 'Error',
       message: 'Error fetching member transactions'
     });
-  }
-};
-
-// Get member loans
-exports.getMemberLoans = async (req, res) => {
-  try {
-    const loans = await fetchMemberLoans(req.params.id);
-    res.render(loans);
-  } catch (error) {
-    console.error('Error fetching member loans:', error);
-    res.render({ error: 'Failed to fetch member loans' });
   }
 };
 

@@ -13,19 +13,17 @@ exports.setQRCode = (qrCode) => {
 // Get the current QR code for WhatsApp authentication
 exports.getQRCode = (req, res) => {
   if (qrCodeData) {
-      res.render('whatsapp-qr', {
-        title: 'WhatsApp QR Code',
-        qrCode: qrCodeData,
-        activeWhatsapp: true
-      });
-    }
+    res.render('whatsapp-qr', {
+      title: 'WhatsApp QR Code',
+      qrCode: qrCodeData,
+      activeWhatsapp: true
+    });
   } else {
-      res.render('whatsapp', {
-        title: 'WhatsApp Integration',
-        error: 'QR code not available yet. Please wait a moment and try again.',
-        activeWhatsapp: true
-      });
-    }
+    res.render('whatsapp', {
+      title: 'WhatsApp Integration',
+      error: 'QR code not available yet. Please wait a moment and try again.',
+      activeWhatsapp: true
+    });
   }
 };
 
@@ -43,11 +41,10 @@ exports.sendMessage = async (req, res, client) => {
     const { number, message } = req.body;
     
     if (!number || !message) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'Number and message are required'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'Number and message are required'
+      });
     }
     
     // Format number to include WhatsApp format (add @ at the end)
@@ -56,19 +53,17 @@ exports.sendMessage = async (req, res, client) => {
     // Send the message
     const result = await client.sendMessage(formattedNumber, message);
     
-      res.render('whatsapp', {
-        title: 'WhatsApp Integration',
-        success: 'Message sent successfully!',
-        activeWhatsapp: true
-      });
-    }
+    res.render('whatsapp', {
+      title: 'WhatsApp Integration',
+      success: 'Message sent successfully!',
+      activeWhatsapp: true
+    });
   } catch (error) {
     console.error('Error sending message:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Failed to send message: ' + error.message
-      });
-    }
+    res.render('error', {
+      title: 'Error',
+      message: 'Failed to send message: ' + error.message
+    });
   }
 };
 
@@ -79,22 +74,20 @@ exports.sendMessageToMember = async (req, res, client) => {
     const memberId = req.params.id;
     
     if (!message) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'Message content is required'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'Message content is required'
+      });
     }
     
     // Get member phone number
     const member = await Member.findByPk(memberId);
     
     if (!member) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'Member not found'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'Member not found'
+      });
     }
     
     try {
@@ -102,23 +95,20 @@ exports.sendMessageToMember = async (req, res, client) => {
       const formattedNumber = member.phone.includes('@c.us') ? member.phone : `${member.phone}@c.us`;
       const result = await client.sendMessage(formattedNumber, message);
       
-        res.redirect(`/members/${memberId}`);
-      }
+      res.redirect(`/members/${memberId}`);
     } catch (error) {
       console.error('Error sending message:', error);
-        res.render('error', {
-          title: 'Error',
-          message: 'Failed to send WhatsApp message: ' + error.message
-        });
-      }
+      res.render('error', {
+        title: 'Error',
+        message: 'Failed to send WhatsApp message: ' + error.message
+      });
     }
   } catch (error) {
     console.error('Error in member message route:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Failed to process request: ' + error.message
-      });
-    }
+    res.render('error', {
+      title: 'Error',
+      message: 'Failed to process request: ' + error.message
+    });
   }
 };
 
@@ -128,11 +118,10 @@ exports.sendBulkMessages = async (req, res, client) => {
     const { message, filter } = req.body;
     
     if (!message) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'Message content is required'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'Message content is required'
+      });
     }
     
     // Build query based on filter
@@ -148,11 +137,10 @@ exports.sendBulkMessages = async (req, res, client) => {
     const members = await Member.findAll({ where });
     
     if (!members || members.length === 0) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'No members found matching criteria'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'No members found matching criteria'
+      });
     }
     
     const results = [];
@@ -180,22 +168,20 @@ exports.sendBulkMessages = async (req, res, client) => {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-      res.render('whatsapp-bulk-result', {
-        title: 'Bulk Message Results',
-        totalSent: results.length,
-        totalFailed: errors.length,
-        successDetails: results,
-        failures: errors,
-        activeWhatsapp: true
-      });
-    }
+    res.render('whatsapp-bulk-result', {
+      title: 'Bulk Message Results',
+      totalSent: results.length,
+      totalFailed: errors.length,
+      successDetails: results,
+      failures: errors,
+      activeWhatsapp: true
+    });
   } catch (error) {
     console.error('Error in bulk message route:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Failed to process bulk message request: ' + error.message
-      });
-    }
+    res.render('error', {
+      title: 'Error',
+      message: 'Failed to process bulk message request: ' + error.message
+    });
   }
 };
 
@@ -215,11 +201,10 @@ exports.sendLoanReminders = async (req, res, client) => {
     });
     
     if (!loans || loans.length === 0) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'No active loans found'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'No active loans found'
+      });
     }
     
     const results = [];
@@ -276,21 +261,19 @@ exports.sendLoanReminders = async (req, res, client) => {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
     
-      res.render('whatsapp-reminder-result', {
-        title: 'Loan Reminder Results',
-        totalSent: results.length,
-        totalFailed: errors.length,
-        successDetails: results,
-        failures: errors,
-        activeWhatsapp: true
-      });
-    }
+    res.render('whatsapp-reminder-result', {
+      title: 'Loan Reminder Results',
+      totalSent: results.length,
+      totalFailed: errors.length,
+      successDetails: results,
+      failures: errors,
+      activeWhatsapp: true
+    });
   } catch (error) {
     console.error('Error in loan reminders route:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Failed to process loan reminders: ' + error.message
-      });
-    }
+    res.render('error', {
+      title: 'Error',
+      message: 'Failed to process loan reminders: ' + error.message
+    });
   }
 };

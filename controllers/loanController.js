@@ -37,17 +37,6 @@ const calculateTotalPaid = (payments) => {
 exports.getAllLoans = async (req, res) => {
   try {
     const loans = await fetchAllLoans();
-    res.render(loans);
-  } catch (error) {
-    console.error('Error fetching loans:', error);
-    res.render({ error: 'Failed to fetch loans' });
-  }
-};
-
-// Get all loans
-exports.getAllLoans = async (req, res) => {
-  try {
-    const loans = await fetchAllLoans();
     res.render('loans', {
       title: 'Loans',
       loans: loans.map(loan => loan.toJSON()),
@@ -60,33 +49,6 @@ exports.getAllLoans = async (req, res) => {
       error: 'Error fetching loans',
       activeLoans: true
     });
-  }
-};
-
-// Get loan by ID with payment history
-exports.getLoanById = async (req, res) => {
-  try {
-    const loan = await fetchLoanById(req.params.id);
-    
-    if (!loan) {
-      return res.render({ error: 'Loan not found' });
-    }
-    
-    // Get loan payments
-    const payments = await fetchLoanPayments(req.params.id);
-    
-    // Calculate total paid
-    const totalPaid = calculateTotalPaid(payments);
-    
-    res.render({
-      ...loan.toJSON(),
-      payments,
-      totalPaid,
-      remainingBalance: loan.amount - totalPaid
-    });
-  } catch (error) {
-    console.error('Error fetching loan:', error);
-    res.render({ error: 'Failed to fetch loan' });
   }
 };
 
@@ -170,17 +132,14 @@ exports.createLoan = async (req, res) => {
       description: `Loan disbursement (ID: ${newLoan.id})`
     });
     
-    // Handle different response types based on Accept header or query param
-      // Redirect to loans list for web form submissions
-      res.redirect('/loans');
-    }
+    // Redirect to loans list for web form submissions
+    res.redirect('/loans');
   } catch (error) {
     console.error('Error creating loan:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Failed to create loan'
-      });
-    }
+    res.render('error', {
+      title: 'Error',
+      message: 'Failed to create loan'
+    });
   }
 };
 
@@ -211,17 +170,14 @@ exports.updateLoan = async (req, res) => {
     
     await loan.save();
     
-    // Handle different response types based on Accept header or query param
-      // Redirect back to loan details for web form submissions
-      res.redirect(`/loans/${req.params.id}`);
-    }
+    // Redirect back to loan details for web form submissions
+    res.redirect(`/loans/${req.params.id}`);
   } catch (error) {
     console.error('Error updating loan:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Failed to update loan'
-      });
-    }
+    res.render('error', {
+      title: 'Error',
+      message: 'Failed to update loan'
+    });
   }
 };
 
@@ -269,50 +225,14 @@ exports.makeLoanPayment = async (req, res) => {
       await loan.save();
     }
     
-    // Handle different response types based on Accept header or query param
-      // Redirect back to loan details for web form submissions
-      res.redirect(`/loans/${loanId}`);
-    }
+    // Redirect back to loan details for web form submissions
+    res.redirect(`/loans/${loanId}`);
   } catch (error) {
     console.error('Error processing loan payment:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Failed to process loan payment'
-      });
-    }
-  }
-};
-
-// Get loan repayment schedule
-exports.getLoanSchedule = async (req, res) => {
-  try {
-    const loan = await Loan.findByPk(req.params.id);
-    
-    if (!loan) {
-      return res.render({ error: 'Loan not found' });
-    }
-    
-    // Calculate loan schedule
-    const schedule = calculateLoanSchedule(loan);
-    
-    // Get actual payments made
-    const payments = await LoanPayment.findAll({
-      where: { loan_id: req.params.id },
-      order: [['payment_date', 'ASC']]
+    res.render('error', {
+      title: 'Error',
+      message: 'Failed to process loan payment'
     });
-    
-    const totalPaid = calculateTotalPaid(payments);
-    
-    res.render({
-      loan,
-      ...schedule,
-      actualPayments: payments,
-      totalPaid,
-      remainingBalance: Math.max(0, loan.amount - totalPaid)
-    });
-  } catch (error) {
-    console.error('Error generating loan schedule:', error);
-    res.render({ error: 'Failed to generate loan schedule' });
   }
 };
 

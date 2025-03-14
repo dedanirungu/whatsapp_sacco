@@ -25,16 +25,6 @@ const fetchMessagesByMember = async (memberId) => {
 exports.getAllMessages = async (req, res) => {
   try {
     const messages = await fetchAllMessages();
-    res.render(messages);
-  } catch (error) {
-    res.render({ message: 'Error fetching messages', error: error.message });
-  }
-};
-
-// Get all messages
-exports.getAllMessages = async (req, res) => {
-  try {
-    const messages = await fetchAllMessages();
     res.render('messages', {
       title: 'Messages',
       messages: messages.map(message => message.toJSON()),
@@ -47,21 +37,6 @@ exports.getAllMessages = async (req, res) => {
       error: 'Error fetching messages',
       activeMessages: true
     });
-  }
-};
-
-// Get a single message
-exports.getMessageById = async (req, res) => {
-  try {
-    const message = await fetchMessageById(req.params.id);
-    
-    if (!message) {
-      return res.render({ message: 'Message not found' });
-    }
-    
-    res.render(message);
-  } catch (error) {
-    res.render({ message: 'Error fetching message', error: error.message });
   }
 };
 
@@ -98,21 +73,19 @@ exports.createMessage = async (req, res) => {
     
     // Validate required fields
     if (!member_id || !message) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'Member ID and message content are required'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'Member ID and message content are required'
+      });
     }
     
     // Check if member exists
     const member = await Member.findByPk(member_id);
     if (!member) {
-        return res.render('error', {
-          title: 'Error',
-          message: 'Member not found'
-        });
-      }
+      return res.render('error', {
+        title: 'Error',
+        message: 'Member not found'
+      });
     }
     
     // Create message in database
@@ -121,34 +94,13 @@ exports.createMessage = async (req, res) => {
       message
     });
     
-      res.redirect('/messages');
-    }
+    res.redirect('/messages');
   } catch (error) {
     console.error('Error creating message:', error);
-      res.render('error', {
-        title: 'Error',
-        message: 'Error creating message'
-      });
-    }
-  }
-};
-
-// Get messages by member
-exports.getMessagesByMember = async (req, res) => {
-  try {
-    const memberId = req.params.member_id;
-    
-    // Check if member exists
-    const member = await Member.findByPk(memberId);
-    if (!member) {
-      return res.render({ message: 'Member not found' });
-    }
-    
-    const messages = await fetchMessagesByMember(memberId);
-    
-    res.render(messages);
-  } catch (error) {
-    res.render({ message: 'Error fetching member messages', error: error.message });
+    res.render('error', {
+      title: 'Error',
+      message: 'Error creating message'
+    });
   }
 };
 
