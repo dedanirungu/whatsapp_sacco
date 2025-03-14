@@ -1,9 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const transactionController = require('../controllers/transactionController');
+const transactionController = require('../../controllers/transactionController');
 
 // Get all transactions
 router.get('/', transactionController.getAllTransactions);
+
+// Get transactions by type
+router.get('/type/:type', transactionController.getTransactionsByType);
 
 // Get transaction by ID
 router.get('/:id', transactionController.getTransactionById);

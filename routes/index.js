@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const memberRoutes = require('./memberRoutes');
-const transactionRoutes = require('./transactionRoutes');
-const loanRoutes = require('./loanRoutes');
-const whatsappRoutes = require('./whatsappRoutes');
-const contributionRoutes = require('./contributionRoutes');
-const messageRoutes = require('./messageRoutes');
+const memberRoutes = require('./api/memberRoutes');
+const transactionRoutes = require('./api/transactionRoutes');
+const loanRoutes = require('./api/loanRoutes');
+const whatsappRoutes = require('./api/whatsappRoutes');
+const contributionRoutes = require('./api/contributionRoutes');
+const messageRoutes = require('./api/messageRoutes');
 
 module.exports = (client) => {
   // API routes

@@ -2,17 +2,41 @@ const { Loan, LoanPayment, Member, Transaction } = require('../models');
 const { calculateLoanSchedule } = require('../utils/loanCalculator');
 const { Op } = require('sequelize');
 
-// Get all loans
+// Shared data fetching functions
+const fetchAllLoans = async () => {
+  return await Loan.findAll({
+    include: [{
+      model: Member,
+      attributes: ['id', 'name', 'phone']
+    }],
+    order: [['start_date', 'DESC']]
+  });
+};
+
+const fetchLoanById = async (id) => {
+  return await Loan.findByPk(id, {
+    include: [{
+      model: Member,
+      attributes: ['id', 'name', 'phone']
+    }]
+  });
+};
+
+const fetchLoanPayments = async (loanId) => {
+  return await LoanPayment.findAll({
+    where: { loan_id: loanId },
+    order: [['payment_date', 'DESC']]
+  });
+};
+
+const calculateTotalPaid = (payments) => {
+  return payments.reduce((sum, payment) => sum + payment.amount, 0);
+};
+
+// API: Get all loans
 exports.getAllLoans = async (req, res) => {
   try {
-    const loans = await Loan.findAll({
-      include: [{
-        model: Member,
-        attributes: ['name', 'phone']
-      }],
-      order: [['start_date', 'DESC']]
-    });
-    
+    const loans = await fetchAllLoans();
     res.json(loans);
   } catch (error) {
     console.error('Error fetching loans:', error);
@@ -20,28 +44,39 @@ exports.getAllLoans = async (req, res) => {
   }
 };
 
-// Get loan by ID with payment history
+// Web: Get all loans
+exports.getAllLoansWeb = async (req, res) => {
+  try {
+    const loans = await fetchAllLoans();
+    res.render('loans', {
+      title: 'Loans',
+      loans: loans.map(loan => loan.toJSON()),
+      activeLoans: true
+    });
+  } catch (error) {
+    console.error('Error fetching loans:', error);
+    res.render('loans', {
+      title: 'Loans',
+      error: 'Error fetching loans',
+      activeLoans: true
+    });
+  }
+};
+
+// API: Get loan by ID with payment history
 exports.getLoanById = async (req, res) => {
   try {
-    const loan = await Loan.findByPk(req.params.id, {
-      include: [{
-        model: Member,
-        attributes: ['name', 'phone']
-      }]
-    });
+    const loan = await fetchLoanById(req.params.id);
     
     if (!loan) {
       return res.status(404).json({ error: 'Loan not found' });
     }
     
     // Get loan payments
-    const payments = await LoanPayment.findAll({
-      where: { loan_id: req.params.id },
-      order: [['payment_date', 'DESC']]
-    });
+    const payments = await fetchLoanPayments(req.params.id);
     
     // Calculate total paid
-    const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const totalPaid = calculateTotalPaid(payments);
     
     res.json({
       ...loan.toJSON(),
@@ -52,6 +87,45 @@ exports.getLoanById = async (req, res) => {
   } catch (error) {
     console.error('Error fetching loan:', error);
     res.status(500).json({ error: 'Failed to fetch loan' });
+  }
+};
+
+// Web: Get loan by ID
+exports.getLoanByIdWeb = async (req, res) => {
+  try {
+    const loan = await Loan.findByPk(req.params.id, {
+      include: [
+        { model: Member },
+        { model: LoanPayment }
+      ]
+    });
+    
+    if (!loan) {
+      return res.render('error', {
+        title: 'Error',
+        message: 'Loan not found'
+      });
+    }
+    
+    // Calculate total paid
+    const totalPaid = loan.LoanPayments ? 
+      loan.LoanPayments.reduce((sum, payment) => sum + payment.amount, 0) : 0;
+    
+    const loanData = loan.toJSON();
+    loanData.totalPaid = totalPaid;
+    loanData.remainingBalance = Math.max(0, loan.amount - totalPaid);
+    
+    res.render('loan-details', {
+      title: `Loan Details`,
+      loan: loanData,
+      activeLoans: true
+    });
+  } catch (error) {
+    console.error('Error fetching loan details:', error);
+    res.render('error', {
+      title: 'Error',
+      message: 'Error fetching loan details'
+    });
   }
 };
 
@@ -96,10 +170,23 @@ exports.createLoan = async (req, res) => {
       description: `Loan disbursement (ID: ${newLoan.id})`
     });
     
-    res.status(201).json(newLoan);
+    // Handle different response types based on Accept header or query param
+    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
+      res.status(201).json(newLoan);
+    } else {
+      // Redirect to loans list for web form submissions
+      res.redirect('/loans');
+    }
   } catch (error) {
     console.error('Error creating loan:', error);
-    res.status(500).json({ error: 'Failed to create loan' });
+    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
+      res.status(500).json({ error: 'Failed to create loan' });
+    } else {
+      res.render('error', {
+        title: 'Error',
+        message: 'Failed to create loan'
+      });
+    }
   }
 };
 
@@ -130,15 +217,28 @@ exports.updateLoan = async (req, res) => {
     
     await loan.save();
     
-    res.json({ 
-      id: parseInt(req.params.id), 
-      status: status || undefined,
-      description: description || undefined,
-      updated: true 
-    });
+    // Handle different response types based on Accept header or query param
+    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
+      res.json({ 
+        id: parseInt(req.params.id), 
+        status: status || undefined,
+        description: description || undefined,
+        updated: true 
+      });
+    } else {
+      // Redirect back to loan details for web form submissions
+      res.redirect(`/loans/${req.params.id}`);
+    }
   } catch (error) {
     console.error('Error updating loan:', error);
-    res.status(500).json({ error: 'Failed to update loan' });
+    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
+      res.status(500).json({ error: 'Failed to update loan' });
+    } else {
+      res.render('error', {
+        title: 'Error',
+        message: 'Failed to update loan'
+      });
+    }
   }
 };
 
@@ -178,7 +278,7 @@ exports.makeLoanPayment = async (req, res) => {
     });
     
     // Calculate total paid
-    const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const totalPaid = calculateTotalPaid(payments);
     
     // If fully paid, update loan status
     if (totalPaid >= loan.amount) {
@@ -186,22 +286,35 @@ exports.makeLoanPayment = async (req, res) => {
       await loan.save();
     }
     
-    res.status(201).json({
-      id: payment.id,
-      loan_id: parseInt(loanId),
-      amount,
-      payment_date: payment.payment_date,
-      totalPaid,
-      remainingBalance: Math.max(0, loan.amount - totalPaid),
-      isFullyPaid: totalPaid >= loan.amount
-    });
+    // Handle different response types based on Accept header or query param
+    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
+      res.status(201).json({
+        id: payment.id,
+        loan_id: parseInt(loanId),
+        amount,
+        payment_date: payment.payment_date,
+        totalPaid,
+        remainingBalance: Math.max(0, loan.amount - totalPaid),
+        isFullyPaid: totalPaid >= loan.amount
+      });
+    } else {
+      // Redirect back to loan details for web form submissions
+      res.redirect(`/loans/${loanId}`);
+    }
   } catch (error) {
     console.error('Error processing loan payment:', error);
-    res.status(500).json({ error: 'Failed to process loan payment' });
+    if (req.headers.accept === 'application/json' || req.query.format === 'json') {
+      res.status(500).json({ error: 'Failed to process loan payment' });
+    } else {
+      res.render('error', {
+        title: 'Error',
+        message: 'Failed to process loan payment'
+      });
+    }
   }
 };
 
-// Get loan repayment schedule
+// API: Get loan repayment schedule
 exports.getLoanSchedule = async (req, res) => {
   try {
     const loan = await Loan.findByPk(req.params.id);
@@ -219,7 +332,7 @@ exports.getLoanSchedule = async (req, res) => {
       order: [['payment_date', 'ASC']]
     });
     
-    const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+    const totalPaid = calculateTotalPaid(payments);
     
     res.json({
       loan,
@@ -231,5 +344,50 @@ exports.getLoanSchedule = async (req, res) => {
   } catch (error) {
     console.error('Error generating loan schedule:', error);
     res.status(500).json({ error: 'Failed to generate loan schedule' });
+  }
+};
+
+// Web: Get loan repayment schedule
+exports.getLoanScheduleWeb = async (req, res) => {
+  try {
+    const loan = await Loan.findByPk(req.params.id, {
+      include: [{ model: Member }]
+    });
+    
+    if (!loan) {
+      return res.render('error', {
+        title: 'Error',
+        message: 'Loan not found'
+      });
+    }
+    
+    // Calculate loan schedule
+    const schedule = calculateLoanSchedule(loan);
+    
+    // Get actual payments made
+    const payments = await LoanPayment.findAll({
+      where: { loan_id: req.params.id },
+      order: [['payment_date', 'ASC']]
+    });
+    
+    const totalPaid = calculateTotalPaid(payments);
+    
+    res.render('loan-schedule', {
+      title: 'Loan Repayment Schedule',
+      loan: loan.toJSON(),
+      schedule: schedule.schedule,
+      totalInterest: schedule.totalInterest,
+      totalPayment: schedule.totalPayment,
+      actualPayments: payments.map(payment => payment.toJSON()),
+      totalPaid,
+      remainingBalance: Math.max(0, loan.amount - totalPaid),
+      activeLoans: true
+    });
+  } catch (error) {
+    console.error('Error generating loan schedule:', error);
+    res.render('error', {
+      title: 'Error',
+      message: 'Error generating loan schedule'
+    });
   }
 };

@@ -8,8 +8,8 @@ const exphbs = require('express-handlebars');
 
 // Import database configuration
 const sequelize = require('./config/database');
-const { Member, Transaction, Loan, LoanPayment, Contribution, Message } = require('./models');
 const routes = require('./routes');
+const webRoutes = require('./routes/web_routes');
 const whatsappController = require('./controllers/whatsappController');
 
 // Initialize Express app
@@ -68,161 +68,11 @@ client.initialize().catch(err => {
   console.error('Error initializing WhatsApp client:', err);
 });
 
-// API routes
+// API routes - JSON endpoints
 app.use('/api', routes(client));
 
-// Web routes (Handlebars)
-app.get('/', (req, res) => {
-  res.render('home', {
-    title: 'WhatsApp SACCO',
-    activeHome: true
-  });
-});
-
-app.get('/members', async (req, res) => {
-  try {
-    const members = await Member.findAll();
-    res.render('members', {
-      title: 'Members',
-      members: members.map(member => member.toJSON()),
-      activeMembers: true
-    });
-  } catch (error) {
-    console.error('Error fetching members:', error);
-    res.render('members', {
-      title: 'Members',
-      error: 'Error fetching members',
-      activeMembers: true
-    });
-  }
-});
-
-app.get('/members/:id', async (req, res) => {
-  try {
-    const member = await Member.findByPk(req.params.id, {
-      include: [
-        { model: Transaction },
-        { model: Loan }
-      ]
-    });
-    
-    if (!member) {
-      return res.render('error', {
-        title: 'Error',
-        message: 'Member not found'
-      });
-    }
-    
-    res.render('member-details', {
-      title: `Member - ${member.name}`,
-      member: member.toJSON(),
-      activeMembers: true
-    });
-  } catch (error) {
-    console.error('Error fetching member details:', error);
-    res.render('error', {
-      title: 'Error',
-      message: 'Error fetching member details'
-    });
-  }
-});
-
-app.get('/contributions', async (req, res) => {
-  try {
-    const contributions = await Contribution.findAll({
-      include: [{ model: Member }]
-    });
-    res.render('contributions', {
-      title: 'Contributions',
-      contributions: contributions.map(contribution => contribution.toJSON()),
-      activeContributions: true
-    });
-  } catch (error) {
-    console.error('Error fetching contributions:', error);
-    res.render('contributions', {
-      title: 'Contributions',
-      error: 'Error fetching contributions',
-      activeContributions: true
-    });
-  }
-});
-
-app.get('/loans', async (req, res) => {
-  try {
-    const loans = await Loan.findAll({
-      include: [{ model: Member }]
-    });
-    res.render('loans', {
-      title: 'Loans',
-      loans: loans.map(loan => loan.toJSON()),
-      activeLoans: true
-    });
-  } catch (error) {
-    console.error('Error fetching loans:', error);
-    res.render('loans', {
-      title: 'Loans',
-      error: 'Error fetching loans',
-      activeLoans: true
-    });
-  }
-});
-
-app.get('/loans/:id', async (req, res) => {
-  try {
-    const loan = await Loan.findByPk(req.params.id, {
-      include: [
-        { model: Member },
-        { model: LoanPayment }
-      ]
-    });
-    
-    if (!loan) {
-      return res.render('error', {
-        title: 'Error',
-        message: 'Loan not found'
-      });
-    }
-    
-    res.render('loan-details', {
-      title: `Loan Details`,
-      loan: loan.toJSON(),
-      activeLoans: true
-    });
-  } catch (error) {
-    console.error('Error fetching loan details:', error);
-    res.render('error', {
-      title: 'Error',
-      message: 'Error fetching loan details'
-    });
-  }
-});
-
-app.get('/messages', async (req, res) => {
-  try {
-    const messages = await Message.findAll({
-      include: [{ model: Member }]
-    });
-    res.render('messages', {
-      title: 'Messages',
-      messages: messages.map(message => message.toJSON()),
-      activeMessages: true
-    });
-  } catch (error) {
-    console.error('Error fetching messages:', error);
-    res.render('messages', {
-      title: 'Messages',
-      error: 'Error fetching messages',
-      activeMessages: true
-    });
-  }
-});
-
-app.get('/whatsapp', (req, res) => {
-  res.render('whatsapp', {
-    title: 'WhatsApp Integration',
-    activeWhatsapp: true
-  });
-});
+// Web routes - HTML views with Handlebars
+app.use('/', webRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {

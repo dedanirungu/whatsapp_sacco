@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const whatsappController = require('../controllers/whatsappController');
+const whatsappController = require('../../controllers/whatsappController');
 
 // WhatsApp routes need the client instance
 module.exports = (client) => {

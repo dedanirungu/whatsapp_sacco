@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const contributionController = require('../controllers/contributionController');
+const contributionController = require('../../controllers/contributionController');
 
 // GET all contributions
 router.get('/', contributionController.getAllContributions);

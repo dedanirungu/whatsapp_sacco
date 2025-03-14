@@ -1,1 +1,0 @@
-// Bootstrap is now used instead of Tailwind CSS
