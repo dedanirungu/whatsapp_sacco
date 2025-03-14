@@ -60,6 +60,19 @@
 - `amount`: REAL NOT NULL - Payment amount
 - `payment_date`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP - When payment was made
 
+### Contributions Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `member_id`: INTEGER NOT NULL - Foreign key to members.id
+- `amount`: REAL NOT NULL - Contribution amount
+- `reason`: TEXT - Optional reason for contribution
+- `timestamp`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP - When contribution was made
+
+### Messages Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `member_id`: INTEGER NOT NULL - Foreign key to members.id
+- `message`: TEXT NOT NULL - Message content
+- `timestamp`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP - When message was created
+
 ## API Endpoints
 
 ### Members
@@ -86,6 +99,18 @@
 - `GET /api/loans/:id/schedule` - Get loan repayment schedule
 - `POST /api/loans/:id/payments` - Make a payment on a loan
 - `POST /api/loans/send-reminders` - Send payment reminders to all active loans
+
+### Contributions
+- `GET /api/contributions` - Get all contributions
+- `GET /api/contributions/:id` - Get a single contribution
+- `POST /api/contributions` - Create a new contribution
+- `GET /api/contributions/member/:member_id` - Get a member's contributions
+
+### Messages
+- `GET /api/messages` - Get all messages
+- `GET /api/messages/:id` - Get a single message
+- `POST /api/messages` - Create a new message
+- `GET /api/messages/member/:member_id` - Get a member's messages
 
 ### WhatsApp
 - `GET /api/whatsapp/qr` - Get QR code for WhatsApp authentication
