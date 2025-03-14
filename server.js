@@ -47,6 +47,40 @@ const db = new sqlite3.Database('./sacco.db', (err) => {
         console.log('Transactions table initialized');
       }
     });
+    
+    db.run(`CREATE TABLE IF NOT EXISTS loans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      member_id INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      interest_rate REAL NOT NULL,
+      loan_type TEXT NOT NULL,
+      term_months INTEGER NOT NULL,
+      status TEXT DEFAULT 'active',
+      start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      end_date TIMESTAMP,
+      description TEXT,
+      FOREIGN KEY (member_id) REFERENCES members (id)
+    )`, (err) => {
+      if (err) {
+        console.error('Error creating loans table', err.message);
+      } else {
+        console.log('Loans table initialized');
+      }
+    });
+    
+    db.run(`CREATE TABLE IF NOT EXISTS loan_payments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      loan_id INTEGER NOT NULL,
+      amount REAL NOT NULL,
+      payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (loan_id) REFERENCES loans (id)
+    )`, (err) => {
+      if (err) {
+        console.error('Error creating loan_payments table', err.message);
+      } else {
+        console.log('Loan payments table initialized');
+      }
+    });
   }
 });
 
@@ -169,6 +203,398 @@ app.get("/api/transactions", (req, res) => {
       return res.status(500).json({ error: "Failed to fetch transactions" });
     }
     res.json(rows);
+  });
+});
+
+// Loans API routes
+app.get("/api/loans", (req, res) => {
+  db.all(`
+    SELECT l.*, m.name as member_name, m.phone as member_phone 
+    FROM loans l
+    JOIN members m ON l.member_id = m.id
+    ORDER BY l.start_date DESC
+  `, [], (err, rows) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: "Failed to fetch loans" });
+    }
+    res.json(rows);
+  });
+});
+
+app.get("/api/loans/:id", (req, res) => {
+  db.get(`
+    SELECT l.*, m.name as member_name, m.phone as member_phone 
+    FROM loans l
+    JOIN members m ON l.member_id = m.id
+    WHERE l.id = ?
+  `, [req.params.id], (err, loan) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: "Failed to fetch loan" });
+    }
+    
+    if (!loan) {
+      return res.status(404).json({ error: "Loan not found" });
+    }
+    
+    // Get loan payments
+    db.all("SELECT * FROM loan_payments WHERE loan_id = ? ORDER BY payment_date DESC", 
+      [req.params.id], 
+      (err, payments) => {
+        if (err) {
+          console.error(err.message);
+          return res.status(500).json({ error: "Failed to fetch loan payments" });
+        }
+        
+        // Calculate total paid
+        const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+        
+        res.json({
+          ...loan,
+          payments,
+          totalPaid,
+          remainingBalance: loan.amount - totalPaid
+        });
+      }
+    );
+  });
+});
+
+app.post("/api/loans", (req, res) => {
+  const { member_id, amount, interest_rate, loan_type, term_months, description } = req.body;
+  
+  if (!member_id || !amount || !interest_rate || !loan_type || !term_months) {
+    return res.status(400).json({ 
+      error: "Member ID, amount, interest rate, loan type, and term are required" 
+    });
+  }
+  
+  // Validate loan type
+  if (!['reducing', 'fixed'].includes(loan_type)) {
+    return res.status(400).json({ error: "Loan type must be 'reducing' or 'fixed'" });
+  }
+  
+  // Calculate end date (start date + term months)
+  const startDate = new Date();
+  const endDate = new Date(startDate);
+  endDate.setMonth(endDate.getMonth() + term_months);
+  
+  db.run(`
+    INSERT INTO loans (
+      member_id, amount, interest_rate, loan_type, 
+      term_months, description, start_date, end_date
+    ) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `, 
+  [
+    member_id, 
+    amount, 
+    interest_rate, 
+    loan_type, 
+    term_months, 
+    description || "", 
+    startDate.toISOString(), 
+    endDate.toISOString()
+  ], 
+  function(err) {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: "Failed to create loan" });
+    }
+    
+    const loanId = this.lastID;
+    
+    // Create a transaction record for the loan disbursement
+    db.run(
+      "INSERT INTO transactions (member_id, amount, type, description) VALUES (?, ?, ?, ?)",
+      [member_id, amount, "loan", `Loan disbursement (ID: ${loanId})`],
+      function(err) {
+        if (err) {
+          console.error(err.message);
+          // Continue even if transaction record fails
+        }
+        
+        res.status(201).json({
+          id: loanId,
+          member_id,
+          amount,
+          interest_rate,
+          loan_type,
+          term_months,
+          description: description || "",
+          status: "active",
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString()
+        });
+      }
+    );
+  });
+});
+
+app.put("/api/loans/:id", (req, res) => {
+  const { status, description } = req.body;
+  
+  // Only allow updating status and description
+  if (!status && !description) {
+    return res.status(400).json({ error: "No valid fields to update" });
+  }
+  
+  // Validate status if provided
+  if (status && !['active', 'paid', 'defaulted', 'restructured'].includes(status)) {
+    return res.status(400).json({ 
+      error: "Status must be 'active', 'paid', 'defaulted', or 'restructured'" 
+    });
+  }
+  
+  let query = "UPDATE loans SET ";
+  const params = [];
+  
+  if (status) {
+    query += "status = ?";
+    params.push(status);
+  }
+  
+  if (description) {
+    if (status) query += ", ";
+    query += "description = ?";
+    params.push(description);
+  }
+  
+  query += " WHERE id = ?";
+  params.push(req.params.id);
+  
+  db.run(query, params, function(err) {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: "Failed to update loan" });
+    }
+    
+    if (this.changes === 0) {
+      return res.status(404).json({ error: "Loan not found" });
+    }
+    
+    res.json({ 
+      id: parseInt(req.params.id), 
+      status: status || undefined,
+      description: description || undefined,
+      updated: true 
+    });
+  });
+});
+
+app.post("/api/loans/:id/payments", (req, res) => {
+  const { amount } = req.body;
+  const loanId = req.params.id;
+  
+  if (!amount || amount <= 0) {
+    return res.status(400).json({ error: "A positive payment amount is required" });
+  }
+  
+  // First verify the loan exists
+  db.get("SELECT * FROM loans WHERE id = ?", [loanId], (err, loan) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: "Failed to fetch loan" });
+    }
+    
+    if (!loan) {
+      return res.status(404).json({ error: "Loan not found" });
+    }
+    
+    // Process the payment
+    db.run(
+      "INSERT INTO loan_payments (loan_id, amount) VALUES (?, ?)",
+      [loanId, amount],
+      function(err) {
+        if (err) {
+          console.error(err.message);
+          return res.status(500).json({ error: "Failed to record loan payment" });
+        }
+        
+        const paymentId = this.lastID;
+        
+        // Create a transaction record for the loan payment
+        db.run(
+          "INSERT INTO transactions (member_id, amount, type, description) VALUES (?, ?, ?, ?)",
+          [loan.member_id, amount, "repayment", `Loan payment (Loan ID: ${loanId})`],
+          function(err) {
+            if (err) {
+              console.error(err.message);
+              // Continue even if transaction record fails
+            }
+            
+            // Get all payments to calculate if loan is fully paid
+            db.all(
+              "SELECT * FROM loan_payments WHERE loan_id = ?",
+              [loanId],
+              (err, payments) => {
+                if (err) {
+                  console.error(err.message);
+                  // Return success even if we can't check payment status
+                  return res.status(201).json({
+                    id: paymentId,
+                    loan_id: parseInt(loanId),
+                    amount,
+                    payment_date: new Date().toISOString()
+                  });
+                }
+                
+                // Calculate total paid
+                const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+                
+                // If fully paid, update loan status
+                if (totalPaid >= loan.amount) {
+                  db.run(
+                    "UPDATE loans SET status = 'paid' WHERE id = ?",
+                    [loanId],
+                    (err) => {
+                      if (err) {
+                        console.error(err.message);
+                      }
+                    }
+                  );
+                }
+                
+                res.status(201).json({
+                  id: paymentId,
+                  loan_id: parseInt(loanId),
+                  amount,
+                  payment_date: new Date().toISOString(),
+                  totalPaid,
+                  remainingBalance: Math.max(0, loan.amount - totalPaid),
+                  isFullyPaid: totalPaid >= loan.amount
+                });
+              }
+            );
+          }
+        );
+      }
+    );
+  });
+});
+
+app.get("/api/members/:id/loans", (req, res) => {
+  const memberId = req.params.id;
+  
+  db.all(
+    "SELECT * FROM loans WHERE member_id = ? ORDER BY start_date DESC",
+    [memberId],
+    (err, loans) => {
+      if (err) {
+        console.error(err.message);
+        return res.status(500).json({ error: "Failed to fetch member loans" });
+      }
+      
+      res.json(loans);
+    }
+  );
+});
+
+// Loan repayment schedule helper function
+function calculateLoanSchedule(loan) {
+  const { amount, interest_rate, term_months, loan_type } = loan;
+  const monthlyInterestRate = interest_rate / 100 / 12;
+  const schedule = [];
+  
+  if (loan_type === 'fixed') {
+    // Simple interest calculation
+    const monthlyPrincipal = amount / term_months;
+    const monthlyInterest = amount * monthlyInterestRate;
+    const monthlyPayment = monthlyPrincipal + monthlyInterest;
+    
+    let remainingBalance = amount;
+    
+    for (let month = 1; month <= term_months; month++) {
+      const principalPaid = monthlyPrincipal;
+      const interestPaid = monthlyInterest;
+      
+      remainingBalance -= principalPaid;
+      
+      schedule.push({
+        month,
+        payment: monthlyPayment,
+        principalPaid,
+        interestPaid,
+        totalPaid: month * monthlyPayment,
+        remainingBalance: Math.max(0, remainingBalance)
+      });
+    }
+  } else if (loan_type === 'reducing') {
+    // Calculate payment using the formula for reducing balance
+    // Formula: P * r * (1+r)^n / ((1+r)^n - 1)
+    // Where P = principal, r = interest rate per period, n = number of periods
+    const monthlyPayment = amount * monthlyInterestRate * 
+      Math.pow(1 + monthlyInterestRate, term_months) / 
+      (Math.pow(1 + monthlyInterestRate, term_months) - 1);
+    
+    let remainingBalance = amount;
+    
+    for (let month = 1; month <= term_months; month++) {
+      const interestPaid = remainingBalance * monthlyInterestRate;
+      const principalPaid = monthlyPayment - interestPaid;
+      
+      remainingBalance -= principalPaid;
+      
+      schedule.push({
+        month,
+        payment: monthlyPayment,
+        principalPaid,
+        interestPaid,
+        totalPaid: month * monthlyPayment,
+        remainingBalance: Math.max(0, remainingBalance)
+      });
+    }
+  }
+  
+  return {
+    schedule,
+    totalPayment: schedule.reduce((sum, period) => sum + period.payment, 0),
+    totalInterest: schedule.reduce((sum, period) => sum + period.interestPaid, 0),
+    monthlyPayment: schedule[0].payment
+  };
+}
+
+// Get loan repayment schedule
+app.get("/api/loans/:id/schedule", (req, res) => {
+  db.get("SELECT * FROM loans WHERE id = ?", [req.params.id], (err, loan) => {
+    if (err) {
+      console.error(err.message);
+      return res.status(500).json({ error: "Failed to fetch loan" });
+    }
+    
+    if (!loan) {
+      return res.status(404).json({ error: "Loan not found" });
+    }
+    
+    // Calculate loan schedule
+    const schedule = calculateLoanSchedule(loan);
+    
+    // Get actual payments made
+    db.all(
+      "SELECT * FROM loan_payments WHERE loan_id = ? ORDER BY payment_date ASC",
+      [req.params.id],
+      (err, payments) => {
+        if (err) {
+          console.error(err.message);
+          // Return schedule even without payment history
+          return res.json({
+            loan,
+            ...schedule
+          });
+        }
+        
+        const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+        
+        res.json({
+          loan,
+          ...schedule,
+          actualPayments: payments,
+          totalPaid,
+          remainingBalance: Math.max(0, loan.amount - totalPaid)
+        });
+      }
+    );
   });
 });
 
@@ -379,6 +805,105 @@ app.post("/api/members/bulk-send", async (req, res) => {
   } catch (error) {
     console.error("Error in bulk message route:", error);
     res.status(500).json({ error: "Failed to process bulk message request" });
+  }
+});
+
+// Send loan payment reminders to members with active loans
+app.post("/api/loans/send-reminders", async (req, res) => {
+  try {
+    const { customMessage } = req.body;
+    
+    // Get all active loans with member information
+    db.all(`
+      SELECT l.*, m.name as member_name, m.phone as member_phone 
+      FROM loans l
+      JOIN members m ON l.member_id = m.id
+      WHERE l.status = 'active'
+      ORDER BY l.id
+    `, [], async (err, loans) => {
+      if (err) {
+        console.error(err.message);
+        return res.status(500).json({ error: "Failed to fetch active loans" });
+      }
+      
+      if (!loans || loans.length === 0) {
+        return res.status(404).json({ error: "No active loans found" });
+      }
+      
+      const results = [];
+      const errors = [];
+      
+      // Process each loan
+      for (const loan of loans) {
+        try {
+          // Get all payments for this loan
+          const payments = await new Promise((resolve, reject) => {
+            db.all(
+              "SELECT * FROM loan_payments WHERE loan_id = ?",
+              [loan.id],
+              (err, rows) => {
+                if (err) reject(err);
+                else resolve(rows || []);
+              }
+            );
+          });
+          
+          // Calculate total paid and remaining balance
+          const totalPaid = payments.reduce((sum, payment) => sum + payment.amount, 0);
+          const remainingBalance = Math.max(0, loan.amount - totalPaid);
+          
+          // Calculate next payment amount based on loan type
+          const loanSchedule = calculateLoanSchedule(loan);
+          const nextPaymentAmount = loanSchedule.monthlyPayment;
+          
+          // Create reminder message
+          let message = customMessage || 
+            `Dear ${loan.member_name}, this is a reminder for your loan payment.\n\n` +
+            `Loan ID: ${loan.id}\n` +
+            `Loan Amount: ${loan.amount}\n` +
+            `Total Paid: ${totalPaid.toFixed(2)}\n` +
+            `Remaining Balance: ${remainingBalance.toFixed(2)}\n` +
+            `Suggested Payment: ${nextPaymentAmount.toFixed(2)}\n\n` +
+            `Please make your payment on time to maintain a good credit record.`;
+          
+          // Send the message
+          const formattedNumber = loan.member_phone.includes("@c.us") ? 
+            loan.member_phone : `${loan.member_phone}@c.us`;
+          
+          const result = await client.sendMessage(formattedNumber, message);
+          
+          results.push({
+            loanId: loan.id,
+            memberId: loan.member_id,
+            memberName: loan.member_name,
+            messageId: result.id._serialized,
+            success: true
+          });
+        } catch (error) {
+          console.error(`Error sending reminder for loan ${loan.id}:`, error);
+          errors.push({
+            loanId: loan.id,
+            memberId: loan.member_id,
+            memberName: loan.member_name,
+            error: error.message
+          });
+        }
+        
+        // Small delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      res.json({
+        success: true,
+        totalSent: results.length,
+        totalFailed: errors.length,
+        successDetails: results,
+        failures: errors
+      });
+    });
+  } catch (error) {
+    console.error("Error in loan reminders route:", error);
+    res.status(500).json({ error: "Failed to process loan reminders" });
   }
 });
 

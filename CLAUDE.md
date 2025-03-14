@@ -42,6 +42,24 @@
 - `description`: TEXT - Optional description
 - `timestamp`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
+### Loans Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `member_id`: INTEGER NOT NULL - Foreign key to members.id
+- `amount`: REAL NOT NULL - Loan principal amount
+- `interest_rate`: REAL NOT NULL - Annual interest rate percentage
+- `loan_type`: TEXT NOT NULL - Either 'reducing' or 'fixed'
+- `term_months`: INTEGER NOT NULL - Loan repayment period in months
+- `status`: TEXT DEFAULT 'active' - Loan status (active, paid, defaulted, restructured)
+- `start_date`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP - When the loan was issued
+- `end_date`: TIMESTAMP - Expected completion date
+- `description`: TEXT - Optional description
+
+### Loan Payments Table
+- `id`: INTEGER PRIMARY KEY AUTOINCREMENT
+- `loan_id`: INTEGER NOT NULL - Foreign key to loans.id
+- `amount`: REAL NOT NULL - Payment amount
+- `payment_date`: TIMESTAMP DEFAULT CURRENT_TIMESTAMP - When payment was made
+
 ## API Endpoints
 
 ### Members
@@ -51,6 +69,7 @@
 - `PUT /api/members/:id` - Update a member
 - `DELETE /api/members/:id` - Delete a member
 - `GET /api/members/:id/transactions` - Get a member's transactions
+- `GET /api/members/:id/loans` - Get a member's loans
 - `POST /api/members/:id/send` - Send WhatsApp message to a member
 - `POST /api/members/bulk-send` - Send bulk WhatsApp messages to members
 
@@ -58,6 +77,15 @@
 - `GET /api/transactions` - Get all transactions
 - `GET /api/transactions/:id` - Get a single transaction
 - `POST /api/transactions` - Create a new transaction
+
+### Loans
+- `GET /api/loans` - Get all loans
+- `GET /api/loans/:id` - Get a single loan with payment history
+- `POST /api/loans` - Create a new loan
+- `PUT /api/loans/:id` - Update loan status or description
+- `GET /api/loans/:id/schedule` - Get loan repayment schedule
+- `POST /api/loans/:id/payments` - Make a payment on a loan
+- `POST /api/loans/send-reminders` - Send payment reminders to all active loans
 
 ### WhatsApp
 - `GET /api/whatsapp/qr` - Get QR code for WhatsApp authentication
