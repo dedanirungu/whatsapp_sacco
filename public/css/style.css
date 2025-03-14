@@ -1,0 +1,50 @@
+/* Custom styles - Bootstrap overrides */
+
+:root {
+  --sacco-green: #25D366;
+  --sacco-green-dark: #21ba58;
+}
+
+/* Customize Bootstrap theme colors */
+.text-success, .btn-success, .bg-success {
+  color: var(--sacco-green) !important;
+}
+
+.btn-success {
+  background-color: var(--sacco-green) !important;
+  border-color: var(--sacco-green) !important;
+}
+
+.btn-success:hover, .btn-success:focus {
+  background-color: var(--sacco-green-dark) !important;
+  border-color: var(--sacco-green-dark) !important;
+}
+
+.btn-outline-success {
+  color: var(--sacco-green) !important;
+  border-color: var(--sacco-green) !important;
+}
+
+.btn-outline-success:hover {
+  background-color: var(--sacco-green) !important;
+  color: white !important;
+}
+
+.nav-link.active {
+  color: var(--sacco-green) !important;
+}
+
+.card {
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: none;
+}
+
+/* Custom components */
+.sacco-card {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}

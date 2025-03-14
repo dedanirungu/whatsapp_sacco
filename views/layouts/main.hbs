@@ -4,43 +4,53 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{title}} - WhatsApp SACCO</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    // Tailwind config
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            'sacco-green': '#25D366',
-          }
-        }
-      }
-    }
-  </script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-light min-vh-100 d-flex flex-column">
   <header class="bg-white shadow">
-    <nav class="container mx-auto px-4 py-2 flex items-center justify-between">
-      <a href="/" class="text-xl font-bold text-sacco-green">WhatsApp SACCO</a>
-      <div class="space-x-4">
-        <a href="/" class="{{#if activeHome}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">Home</a>
-        <a href="/members" class="{{#if activeMembers}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">Members</a>
-        <a href="/contributions" class="{{#if activeContributions}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">Contributions</a>
-        <a href="/loans" class="{{#if activeLoans}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">Loans</a>
-        <a href="/messages" class="{{#if activeMessages}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">Messages</a>
-        <a href="/whatsapp" class="{{#if activeWhatsapp}}text-sacco-green font-bold{{else}}text-gray-600 hover:text-sacco-green{{/if}}">WhatsApp</a>
+    <nav class="navbar navbar-expand-lg container py-2">
+      <div class="container-fluid">
+        <a href="/" class="navbar-brand fw-bold text-success">WhatsApp SACCO</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item">
+              <a href="/" class="nav-link {{#if activeHome}}active fw-bold{{/if}}">Home</a>
+            </li>
+            <li class="nav-item">
+              <a href="/members" class="nav-link {{#if activeMembers}}active fw-bold{{/if}}">Members</a>
+            </li>
+            <li class="nav-item">
+              <a href="/contributions" class="nav-link {{#if activeContributions}}active fw-bold{{/if}}">Contributions</a>
+            </li>
+            <li class="nav-item">
+              <a href="/loans" class="nav-link {{#if activeLoans}}active fw-bold{{/if}}">Loans</a>
+            </li>
+            <li class="nav-item">
+              <a href="/messages" class="nav-link {{#if activeMessages}}active fw-bold{{/if}}">Messages</a>
+            </li>
+            <li class="nav-item">
+              <a href="/whatsapp" class="nav-link {{#if activeWhatsapp}}active fw-bold{{/if}}">WhatsApp</a>
+            </li>
+          </ul>
+        </div>
       </div>
     </nav>
   </header>
   
-  <main class="container mx-auto px-4 py-6">
+  <main class="container py-4 flex-grow-1">
     {{{body}}}
   </main>
 
-  <footer class="bg-white mt-8 py-4 shadow-inner">
-    <div class="container mx-auto px-4 text-center text-gray-500">
-      <p>&copy; 2025 WhatsApp SACCO. All rights reserved.</p>
+  <footer class="bg-white py-3 mt-auto border-top">
+    <div class="container text-center text-muted">
+      <p class="mb-0">&copy; 2025 WhatsApp SACCO. All rights reserved.</p>
     </div>
   </footer>
+  
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

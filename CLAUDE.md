@@ -24,16 +24,16 @@
 - Backend Express API in server.js
 - Frontend views using Handlebars (.hbs) templating
 - Server-side routing with Express
-- Frontend styled with Tailwind CSS via CDN
+- Frontend styled with Bootstrap 5 via CDN
 - WhatsApp Web.js integration for browser-based interaction
 - QR code authentication handled through browser interface
 - SQLite database (sacco.db) for persistent storage using Sequelize ORM
 
 ## CSS & Frontend
-- Using Tailwind CSS via CDN instead of custom CSS
-- Primary color for buttons: bg-green-500 hover:bg-green-600
-- Card design: bg-white p-6 rounded-lg shadow-md
-- Custom WhatsApp brand color: 'sacco-green': '#25D366'
+- Using Bootstrap 5.3.2 via CDN
+- Primary color for buttons: btn-success (customized to WhatsApp green)
+- Card design: card shadow with rounded corners
+- Custom WhatsApp brand color: #25D366 (mapped to Bootstrap's success color via CSS variables)
 
 ## Database Schema
 

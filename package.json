@@ -10,9 +10,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": "",
+  "description": "WhatsApp SACCO Management System",
   "dependencies": {
     "body-parser": "^1.20.3",
+    "bootstrap": "^5.3.2",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "express-handlebars": "^8.0.1",
